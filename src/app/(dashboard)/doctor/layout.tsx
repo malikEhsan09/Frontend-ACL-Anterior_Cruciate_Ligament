@@ -19,7 +19,6 @@ export default function PlayerLayout({ children }: PlayerLayoutProps) {
   const [profileImage, setProfileImage] = useState(
     "http://res.cloudinary.com/dr5p2iear/image/upload/v1720626597/di9grffkw7ltgikaiper.jpg"
   );
-  const [imageUpdated, setImageUpdated] = useState(false);
 
   const pathname = usePathname();
 
@@ -48,18 +47,21 @@ export default function PlayerLayout({ children }: PlayerLayoutProps) {
         const result = await response.json();
         console.log("Fetched Profile Data:", result);
 
-        // Update the state with the fetched profile image and user name
         setProfileImage(
           result.image ||
             "http://res.cloudinary.com/dr5p2iear/image/upload/v1720626597/di9grffkw7ltgikaiper.jpg"
         );
-        // setUserName(result.firstName + " " + result.lastName);
       } else {
         console.error("Failed to fetch player data", response.status);
       }
     } catch (error) {
       console.error("Error fetching player data:", error);
     }
+  };
+
+  // Update profile image callback for child components
+  const updateProfileImage = (newImageUrl: string) => {
+    setProfileImage(newImageUrl);
   };
 
   useEffect(() => {
@@ -70,8 +72,14 @@ export default function PlayerLayout({ children }: PlayerLayoutProps) {
     switch (pathname) {
       case "/doctor/dashboard":
         return "Dashboard";
-      case "/doctor/exercises":
-        return "Exercises";
+      case "/doctor/appointment":
+        return "Appointment Schedule";
+      case "/doctor/doctor":
+        return "Doctors";
+      case "/doctor/settings":
+        return "Settings";
+      case "/doctor/players":
+        return "Players Report";
       default:
         return "Dashboard";
     }
@@ -81,34 +89,17 @@ export default function PlayerLayout({ children }: PlayerLayoutProps) {
     setIsCollapsed(collapsed);
   };
 
-  const updateProfileImage = (newImageUrl: string) => {
-    setProfileImage(newImageUrl); // Update profile image in layout state
-    setImageUpdated(true); // Track that the image has been updated
-  };
-
-  useEffect(() => {
-    if (imageUpdated) {
-      // Ensure the profile image is updated in the Topbar when the image is updated in settings
-      fetchPlayerData(); // Refetch the player data after the image is updated
-      setImageUpdated(false); // Reset the update state
-    }
-  }, [imageUpdated]);
-
   return (
     <html lang="en">
       <body className={inter.className}>
         <div className="flex overflow-x-hidden h-screen">
-          {/* Sidebar */}
           <Sidebar onToggle={handleSidebarToggle} isCollapsed={isCollapsed} />
-
-          {/* Main Content */}
           <div
             className={`flex-1 min-h-screen transition-all duration-300 ${
               isCollapsed ? "ml-20" : "ml-52"
             }`}
           >
-            {/* Added margin to topbar */}
-            <div className={`pt-4 ml-7 `}>
+            <div className={`pt-4 ml-7`}>
               <Topbar
                 title={getTitle()}
                 isSidebarCollapsed={isCollapsed}
@@ -118,11 +109,10 @@ export default function PlayerLayout({ children }: PlayerLayoutProps) {
             <main className="py-6 px-4">
               {React.isValidElement(children)
                 ? React.cloneElement(children, {
-                    onUpdateProfileImage: updateProfileImage, // Pass the updateProfileImage function to children
+                    onUpdateProfileImage: updateProfileImage,
                   })
                 : children}
             </main>
-            {/* Adjusted margin */}
           </div>
         </div>
       </body>

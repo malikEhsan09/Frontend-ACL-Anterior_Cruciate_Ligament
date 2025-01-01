@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 
+import { generatePaymentPDF } from "./generate-payment-receipt";
+
 interface Payment {
   _id: string;
   amount: number;
@@ -101,6 +103,24 @@ export default function PaymentHistory() {
       setCurrentPage(newPage);
     }
   };
+
+  const fetchPayments = async (paymentid) => {
+    console.log("fetching payment data")
+    const response = await axios.get(`http://localhost:8800/api/payment/${paymentid}`,
+    //   {
+    //   params:{
+    //     paymentId:paymentid
+    //   }
+    // }  
+  );
+    if (response.status === 200) {
+      console.log("fetching payment data success")
+        console.log(response.data.payment)
+        generatePaymentPDF(response.data.payment);
+    } else {
+      throw new Error("Failed to fetch payment data");
+    }
+  }
 
   return (
     <Card className="w-full">
@@ -196,13 +216,14 @@ export default function PaymentHistory() {
                   {new Date(payment.createdAt).toLocaleDateString()}
                 </TableCell>
                 <TableCell>
-                  <a
-                    href={`http://localhost:8800/api/payment/download-receipt/${payment._id}`}
-                    className="flex items-center text-[#333] hover:text-black"
+                  <div
+                  onClick={()=>fetchPayments(payment._id)}
+                    // href={`http://localhost:8800/api/payment/download-receipt/${payment._id}`}
+                    className="flex items-center text-[#333] hover:text-black hover:cursor-pointer"
                     style={{ textDecoration: "none" }} // Remove underline
                   >
                     <Download size={17} className="mr-1" /> Download Receipt
-                  </a>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

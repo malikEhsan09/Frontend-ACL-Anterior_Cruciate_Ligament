@@ -1,16 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  Trash2,
-  Edit,
-  Plus,
-  Calendar,
-  Clock,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, Trash2, Edit, Plus, Calendar, Clock } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -27,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import TimeSlotSelector from "./appointment-components/time-selector";
 import {
   Tooltip,
   TooltipContent,
@@ -34,12 +26,22 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import { Toast } from "@/components/ui/toast";
+import { ViewScheduleModal } from "./appointment-components/view-schedule-modal";
+import { EditScheduleModal } from "./appointment-components/edit-schedule.modal";
+import { ConfirmationDialog } from "./appointment-components/confirmation-dialog";
 import styles from "./appointment.module.css";
+
+interface TimeSlot {
+  startTime: string;
+  endTime: string;
+  status: string;
+}
 
 interface Schedule {
   _id: string;
   day: string;
-  timings: string[];
+  timings: TimeSlot[];
 }
 
 interface Toast {
@@ -54,9 +56,12 @@ export default function DoctorSchedule() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortOrder, setSortOrder] = useState("Newest");
-  const [selectedDay, setSelectedDay] = useState("");
-  const [timeSlots, setTimeSlots] = useState<string[]>([]);
+  // const [selectedDay, setSelectedDay] = useState("");
+  const [timeSlots, setTimeSlots] = useState<{ startTime: string; endTime: string }[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [viewSchedule, setViewSchedule] = useState<Schedule | null>(null);
+  const [editSchedule, setEditSchedule] = useState<Schedule | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; isOpen: boolean }>({ id: '', isOpen: false });
   const dataPerPage = 7;
 
   const days = [
@@ -69,19 +74,49 @@ export default function DoctorSchedule() {
     "Sunday",
   ];
 
+  const [selectedDate, setSelectedDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+
+
+  const [selectedDay, setSelectedDay] = useState("");
+  // const [timeSlots, setTimeSlots] = useState([]);
+  const [selectedStartTime, setSelectedStartTime] = useState("");
+  const [selectedEndTime, setSelectedEndTime] = useState("");
+
+  // Handle adding a time slot
+  // const handleAddTimeSlot = () => {
+  //   if (!selectedStartTime || !selectedEndTime) return;
+
+  //   setTimeSlots([
+  //     ...timeSlots,
+  //     { startTime: selectedStartTime, endTime: selectedEndTime },
+  //   ]);
+
+  //   setSelectedStartTime("");
+  //   setSelectedEndTime("");
+  // };
+
   useEffect(() => {
     fetchSchedules();
   }, []);
 
   const fetchSchedules = async () => {
     try {
-      const response = await fetch(`http://localhost:8800/api/doctor/schedule`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`, // Assuming you store the token in localStorage
-        },
-      });
+      const token = localStorage.getItem("authToken");
+      const userID = localStorage.getItem("userId");
+      console.log("Doctor ID:", userID);
+      const response = await fetch(
+        `http://localhost:8800/api/doctor/schedule/${userID}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       if (!response.ok) throw new Error("Failed to fetch schedules");
       const data = await response.json();
+      console.log("Doctor schedule data", data);
       setSchedules(data.schedule.slots);
     } catch (error) {
       console.error("Error fetching schedules:", error);
@@ -112,47 +147,130 @@ export default function DoctorSchedule() {
   };
 
   const handleAddTimeSlot = () => {
-    setTimeSlots([...timeSlots, ""]);
-  };
+    if (!selectedDate || !selectedStartTime || !selectedEndTime) {
+      alert("Please select a date, start time, and end time.");
+      return;
+    }
 
-  const handleTimeSlotChange = (index: number, value: string) => {
+    const formattedStartTime = new Date(`${selectedDate}T${selectedStartTime}:00`);
+    const formattedEndTime = new Date(`${selectedDate}T${selectedEndTime}:00`);
+
+    if (isNaN(formattedStartTime.getTime()) || isNaN(formattedEndTime.getTime())) {
+      alert("Invalid time format");
+      return;
+    }
+
+    setTimeSlots([
+      ...timeSlots,
+      { 
+        startTime: formattedStartTime.toISOString(), 
+        endTime: formattedEndTime.toISOString() 
+      },
+    ]);
+
+    setSelectedStartTime("");
+    setSelectedEndTime("");
+  };
+  
+
+  // const handleAddTimeSlot = () => {
+  //   setTimeSlots([...timeSlots, { startTime: "", endTime: "" }]);
+  // };
+  
+  const handleTimeSlotChange = (index: number, field: "startTime" | "endTime", value: string) => {
     const newTimeSlots = [...timeSlots];
-    newTimeSlots[index] = value;
+    newTimeSlots[index][field] = value;
     setTimeSlots(newTimeSlots);
   };
+  
+  
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value);
+  };
 
-  // * Create Schedule
+  const handleStartTimeChange = (e) => {
+    setStartTime(e.target.value);
+  };
+
+  const handleEndTimeChange = (e) => {
+    setEndTime(e.target.value);
+  };
+
   const handleCreateSchedule = async () => {
     try {
       const token = localStorage.getItem("authToken");
+      if (!token) {
+        console.error("Auth token is missing");
+        addToast("Error", "Authentication token is missing.", "error");
+        return;
+      }
+  
       console.log("Doctor schedule Token:", token);
+  
+      // Check if required fields are selected
+      if (!selectedDay || timeSlots.length === 0 || !selectedDate) {
+        addToast("Error", "Please fill in all required fields.", "error");
+        return;
+      }
+  
+      // Format time slots with selectedDate
+      const formattedSlots = timeSlots.map((slot) => {
+        // Combine the selectedDate and the time to form a full date-time string
+        const startTime = new Date(slot.startTime);
+        const endTime = new Date(slot.endTime);
+
+        console.log("Start Time:", startTime);
+        console.log("End Time:", endTime);
       
-      const response = await fetch("http://localhost:8800/api/doctor/schedule", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          slots: [
-            {
-              day: selectedDay,
-              timings: timeSlots.filter((slot) => slot !== ""),
-            },
-          ],
-        }),
+        if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+          throw new Error('Invalid start or end time');
+        }
+      
+        return {
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(),
+          status: "available",
+        };
       });
-
-      if (!response.ok) throw new Error("Failed to create schedule");
-
+      
+      // POST request
+      const response = await fetch(
+        "http://localhost:8800/api/doctor/create-schedule",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            slots: [
+              {
+                day: selectedDay,
+                timings: formattedSlots,
+              },
+            ],
+          }),
+        }
+      );
+  
+      // Handle response
+      if (!response.ok) {
+        const errorMessage = await response.text();
+        throw new Error(errorMessage || "Failed to create schedule");
+      }
+  
       const data = await response.json();
+  
+      // Update schedules and reset fields
       setSchedules((prevSchedules) => [
         ...prevSchedules,
         ...data.schedule.slots,
       ]);
+  
       setIsModalOpen(false);
       setSelectedDay("");
       setTimeSlots([]);
+  
       addToast(
         "Schedule Created",
         `New schedule for ${selectedDay} has been created successfully.`,
@@ -160,27 +278,29 @@ export default function DoctorSchedule() {
       );
     } catch (error) {
       console.error("Error creating schedule:", error);
-      addToast("Error", "Failed to create schedule", "error");
+      addToast("Error", error.message || "Failed to create schedule", "error");
     }
   };
+  
 
   const handleViewSchedule = (schedule: Schedule) => {
-    addToast("View Schedule", `Viewing schedule for ${schedule.day}`, "info");
+    setViewSchedule(schedule);
   };
 
   const handleEditSchedule = (schedule: Schedule) => {
-  
-    // Implement edit functionality
-    addToast("Edit Schedule", `Editing schedule for ${schedule.day}`, "info");
+    setEditSchedule(schedule);
   };
 
   const handleDeleteSchedule = async (scheduleId: string) => {
     try {
-      const response = await fetch(`/api/schedule/${scheduleId}`, {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`http://localhost:8800/api/doctor/schedule/delete`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({ scheduleId }),
       });
 
       if (!response.ok) throw new Error("Failed to delete schedule");
@@ -197,24 +317,65 @@ export default function DoctorSchedule() {
     }
   };
 
+  const handleUpdateSchedule = async (updatedSchedule: Schedule) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch(`http://localhost:8800/api/doctor/schedule/update`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedSchedule),
+      });
+
+      if (!response.ok) throw new Error("Failed to update schedule");
+
+      const updatedData = await response.json();
+      setSchedules(schedules.map(schedule => 
+        schedule._id === updatedData._id ? updatedData : schedule
+      ));
+      setEditSchedule(null);
+      addToast(
+        "Schedule Updated",
+        "The schedule has been updated successfully.",
+        "success"
+      );
+    } catch (error) {
+      console.error("Error updating schedule:", error);
+      addToast("Error", "Failed to update schedule", "error");
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!selectedDate || !startTime || !endTime) {
+      alert('Please select a date, start time, and end time.');
+      return;
+    }
+
+    // Combine date with time
+    const formattedStartTime = new Date(`${selectedDate}T${startTime}:00`).toISOString();
+    const formattedEndTime = new Date(`${selectedDate}T${endTime}:00`).toISOString();
+
+    console.log('Selected Time Slot:', {
+      startTime: formattedStartTime,
+      endTime: formattedEndTime,
+    });
+  };
+
   return (
     <div className="p-2 mt-2">
       {/* Toast Container */}
       <div className={styles.toastContainer}>
         {toasts.map((toast) => (
-          <div
+          <Toast
             key={toast.id}
-            className={`${styles.toast} ${
-              toast.type === "success"
-                ? styles.success
-                : toast.type === "error"
-                ? styles.error
-                : styles.info
-            }`}
-          >
-            <h4 className={styles.toastTitle}>{toast.title}</h4>
-            <p>{toast.description}</p>
-          </div>
+            title={toast.title}
+            description={toast.description}
+            type={toast.type}
+          />
         ))}
       </div>
 
@@ -290,7 +451,8 @@ export default function DoctorSchedule() {
                           variant="secondary"
                           className="bg-gray-100 text-gray-700"
                         >
-                          {time}
+                          {new Date(time.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
+                          {new Date(time.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </Badge>
                       ))}
                     </div>
@@ -335,7 +497,7 @@ export default function DoctorSchedule() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleDeleteSchedule(schedule._id)}
+                              onClick={() => setDeleteConfirmation({ id: schedule._id, isOpen: true })}
                             >
                               <Trash2 className="h-5 w-5" />
                             </Button>
@@ -400,76 +562,164 @@ export default function DoctorSchedule() {
       {/* Create Schedule Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Create Schedule</CardTitle>
-              <CardDescription>
-                Set your availability for appointments
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Day</label>
-                <Select value={selectedDay} onValueChange={setSelectedDay}>
-                  <SelectTrigger className="bg-white">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    <SelectValue placeholder="Select day" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {days.map((day) => (
-                      <SelectItem key={day} value={day}>
-                        {day}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+         <Card className="w-full max-w-md">
+      <CardHeader>
+        <CardTitle>Create Schedule</CardTitle>
+        <CardDescription>Set your availability for appointments</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Day Picker */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Day</label>
+          <div className="relative">
+            <select
+              value={selectedDay}
+              onChange={(e) => setSelectedDay(e.target.value)}
+              className="w-full p-2 border rounded-md bg-white"
+            >
+              <option value="" disabled>Select a day</option>
+              {days.map((day) => (
+                <option key={day} value={day}>
+                  {day}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Time Slots</label>
-                {timeSlots.map((slot, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4" />
-                    <Input
-                      type="time"
-                      value={slot}
-                      onChange={(e) =>
-                        handleTimeSlotChange(index, e.target.value)
-                      }
-                      className="flex-grow bg-white"
-                    />
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddTimeSlot}
-                  className="w-full bg-white"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Time Slot
-                </Button>
-              </div>
+        {/* Date Picker */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Select Date</label>
+          <div className="flex items-center space-x-2">
+            <Calendar className="h-4 w-4" />
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              placeholder="Select Date"
+            />
+          </div>
+        </div>
 
-              <div className="flex justify-end space-x-2 mt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsModalOpen(false)}
-                  className="bg-white"
+        {/* Time Slot Inputs */}
+        <div className="space-y-4">
+          <label className="text-sm font-medium">Add Time Slot</label>
+          <div className="flex items-center space-x-4">
+            {/* Start Time Picker */}
+            <div className="flex items-center space-x-2">
+              <Clock className="h-4 w-4" />
+              <Input
+                type="time"
+                value={selectedStartTime}
+                onChange={(e) => setSelectedStartTime(e.target.value)}
+                placeholder="Start Time"
+              />
+            </div>
+
+            {/* End Time Picker */}
+            <div className="flex items-center space-x-2">
+              <Clock className="h-4 w-4" />
+              <Input
+                type="time"
+                value={selectedEndTime}
+                onChange={(e) => setSelectedEndTime(e.target.value)}
+                placeholder="End Time"
+              />
+            </div>
+
+            {/* Add Button */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAddTimeSlot}
+              className="bg-white"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Display Added Time Slots */}
+        {timeSlots.length > 0 && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Added Time Slots</label>
+            <ul className="space-y-2">
+              {timeSlots.map((slot, index) => (
+                <li
+                  key={index}
+                  className="flex justify-between items-center p-2 border rounded-md bg-gray-50"
                 >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleCreateSchedule}
-                  className="bg-[#4681BC] text-white hover:bg-[#3A6FA4]"
-                >
-                  Create Schedule
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                  <span className="text-sm font-medium">
+                    Start: {new Date(slot.startTime).toLocaleString()} <br />
+                    End: {new Date(slot.endTime).toLocaleString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex justify-end space-x-2 mt-4">
+          <Button variant="outline" className="bg-white"
+          onClick={() => setIsModalOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button className="bg-[#4681BC] text-white hover:bg-[#3A6FA4]"
+          onClick={handleCreateSchedule}
+          >
+            Create Schedule
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
         </div>
       )}
+
+      {/* View Schedule Modal */}
+      {viewSchedule && (
+        <ViewScheduleModal
+          schedule={viewSchedule}
+          onClose={() => setViewSchedule(null)}
+        />
+      )}
+
+      {/* Edit Schedule Modal */}
+      {editSchedule && (
+        <EditScheduleModal
+          schedule={editSchedule}
+          onClose={() => setEditSchedule(null)}
+          onUpdate={handleUpdateSchedule}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={deleteConfirmation.isOpen}
+        onClose={() => setDeleteConfirmation({ id: '', isOpen: false })}
+        onConfirm={() => {
+          handleDeleteSchedule(deleteConfirmation.id);
+          setDeleteConfirmation({ id: '', isOpen: false });
+        }}
+        title="Delete Schedule"
+        message="Are you sure you want to delete this schedule? This action cannot be undone."
+      />
     </div>
   );
 }
+
+
+
+  // <div key={index} className="flex items-center space-x-2">
+                  //   <Clock className="h-4 w-4" />
+                  //   <Input
+                  //     type="time"
+                  //     value={slot}
+                  //     onChange={(e) =>
+                  //       handleTimeSlotChange(index, e.target.value)
+                  //     }
+                  //     className="flex-grow bg-white"
+                  //   />
+                  // </div>
+

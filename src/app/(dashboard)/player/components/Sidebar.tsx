@@ -8,6 +8,7 @@ import {
   Activity,
   Settings,
   HelpCircle,
+  MailWarning,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -122,6 +123,11 @@ const Sidebar = ({
       icon: <FaCalendarAlt size={24} />,
       path: "/player/bookAppointment",
     },
+    // {
+    //   name: "Complaints",
+    //   icon: <MailWarning size={24} />,
+    //   path: "/player/complaints",
+    // },
   ];
 
   return (

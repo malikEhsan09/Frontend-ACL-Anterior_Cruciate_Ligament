@@ -99,6 +99,8 @@ export default function PlayerLayout({ children }: PlayerLayoutProps) {
         return "Payments";
       case "/player/bookAppointment":
         return "Book Appointment";
+        // case "/player/complaints":
+        //   return "Complaints";
       default:
         return "Dashboard";
     }

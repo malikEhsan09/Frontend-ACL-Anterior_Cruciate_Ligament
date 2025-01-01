@@ -1,7 +1,7 @@
 "use client";
 import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
-import { Settings, LogOut, User } from "lucide-react"; // Import icons
+import { Settings, LogOut, User } from 'lucide-react';
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -9,20 +9,20 @@ interface TopbarProps {
   className?: string;
   title?: string;
   isSidebarCollapsed?: boolean;
-  userImage?: string;
+  userImage: string;
 }
 
 const Topbar: React.FC<TopbarProps> = ({
   className = "",
   title = "Dashboard",
   isSidebarCollapsed,
-  userImage = "http://res.cloudinary.com/dr5p2iear/image/upload/v1720626597/di9grffkw7ltgikaiper.jpg", // Default image
+  userImage,
 }) => {
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false);
 
-  const router = useRouter(); // Updated useRouter from next/navigation
+  const router = useRouter();
 
   useEffect(() => {
     const storedUserName = localStorage.getItem("userName");
@@ -38,7 +38,6 @@ const Topbar: React.FC<TopbarProps> = ({
     setIsSettingsDropdownOpen(!isSettingsDropdownOpen);
   };
 
-  // Handle Logout and redirect to login page
   const handleLogout = async () => {
     try {
       await fetch("http://localhost:8800/api/auth/signout", {
@@ -50,32 +49,24 @@ const Topbar: React.FC<TopbarProps> = ({
       localStorage.removeItem("userName");
       localStorage.removeItem("userEmail");
 
-      // Redirect to login page
       router.push("/login");
     } catch (error) {
       console.error("Error during logout:", error);
     }
   };
 
-  // Redirect to the admin page
   const handleProfileSettings = () => {
-    router.push("/player/settings");
+    router.push("/doctor/settings");
   };
 
   return (
     <header className={`flex items-center justify-between w-full ${className}`}>
-      <div
-        className={`flex flex-col items-start
-             // ${isSidebarCollapsed ? "" : ""} transition-all duration-300`}
-      >
-        <a className="text-2xl font-bold">Admin Dashboard</a>
-        <a className="text-md font-semibold  text-onHover mt-1">{title}</a>
+      <div className={`flex flex-col items-start`}>
+        <a className="text-2xl font-bold">Doctor Dashboard</a>
+        <a className="text-md font-semibold text-onHover mt-1">{title}</a>
       </div>
 
       <div className="flex items-center gap-4 pr-8">
-        {/* Notification Icon */}
-
-        {/* User Info */}
         <div className="flex items-center gap-4 relative">
           <div className="flex flex-col items-start">
             <span className="font-bold">{userName || "Guest"}</span>
@@ -88,13 +79,12 @@ const Topbar: React.FC<TopbarProps> = ({
             <Image
               className="h-[2.5rem] w-[2.5rem] rounded-full"
               alt="User Avatar"
-              src={userImage} // Use the updated user image from props
+              src={userImage}
               width={40}
               height={40}
             />
           </div>
 
-          {/* Settings Icon */}
           <div className="relative">
             <Settings
               className="w-[1.5rem] h-[1.5rem] cursor-pointer"
@@ -129,6 +119,8 @@ const Topbar: React.FC<TopbarProps> = ({
 Topbar.propTypes = {
   className: PropTypes.string,
   isSidebarCollapsed: PropTypes.bool,
+  userImage: PropTypes.string.isRequired,
 };
 
 export default Topbar;
+

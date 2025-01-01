@@ -553,9 +553,9 @@ interface ProfileInfo {
   lastName: string;
   age: string;
   dateOfBirth: string;
-  address: string;
   gender: string;
   nationality: string;
+  address: string;
   phoneNumber: string;
   image: string | null;
   isMember: string;

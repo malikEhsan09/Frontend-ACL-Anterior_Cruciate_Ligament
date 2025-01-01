@@ -1,95 +1,111 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import { BarChart, Bar, ResponsiveContainer } from "recharts";
+"use client"
 
-// Dummy chart data for example
-const chartData = [
-  { value: 10 },
-  { value: 15 },
-  { value: 20 },
-  { value: 25 },
-  { value: 30 },
-  { value: 35 },
-];
+import React, { useState, useEffect } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
+import { Bar, BarChart } from "recharts"
+import { motion } from "framer-motion"
+import { Users } from 'lucide-react'
 
 export default function TotalClubs() {
-  const [totalClubs, setTotalClubs] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [totalClubs, setTotalClubs] = useState(0)
+  const [chartData, setChartData] = useState<{ name: string; value: number }[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Function to get the authentication token from localStorage
   const getAuthToken = () => {
-    return localStorage.getItem("authToken");
-  };
+    return localStorage.getItem("authToken")
+  }
 
   useEffect(() => {
-    // Fetch clubs data from the API
     const fetchClubsData = async () => {
-      const authToken = getAuthToken();
-      const headers = new Headers();
-      headers.append("Authorization", `Bearer ${authToken}`);
+      const authToken = getAuthToken()
+      const headers = new Headers()
+      headers.append("Authorization", `Bearer ${authToken}`)
 
       try {
         const response = await fetch("http://localhost:8800/api/club", {
           headers: headers,
-        });
-        if (!response.ok) throw new Error("Failed to fetch clubs data");
-        const clubsData = await response.json();
+        })
+        if (!response.ok) throw new Error("Failed to fetch clubs data")
+        const clubsData = await response.json()
 
-        // Set the total number of clubs
-        setTotalClubs(clubsData.length);
+        setTotalClubs(clubsData.length)
+        
+        // Generate chart data based on club creation dates
+        const last6Months = Array.from({ length: 6 }, (_, i) => {
+          const d = new Date()
+          d.setMonth(d.getMonth() - i)
+          return d.toISOString().slice(0, 7) // YYYY-MM format
+        }).reverse()
+
+        const monthlyData = last6Months.map((month, index) => ({
+          name: new Date(month).toLocaleString('default', { month: 'short' }),
+          value: clubsData.filter((club: { createdAt: string }) => 
+            club.createdAt.startsWith(month)
+          ).length,
+        }))
+
+        setChartData(monthlyData)
       } catch (error) {
-        if (error instanceof Error) {
-          setError(error.message);
-        } else {
-          setError(String(error));
-        }
+        setError(error instanceof Error ? error.message : String(error))
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchClubsData();
-  }, []);
+    fetchClubsData()
+  }, [])
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) return <Card className="w-full h-[200px] flex items-center justify-center">Loading...</Card>
+  if (error) return <Card className="w-full h-[200px] flex items-center justify-center text-red-500">Error: {error}</Card>
 
   return (
-    <div className="bg-gray-100 p-4 rounded-lg">
-      <h2 className="text-lg font-semibold mb-2">Total Clubs Reg</h2>
-      <div className="flex items-center justify-between">
-        <span className="text-2xl font-bold text-green-600">{totalClubs}</span>
-        <span className="text-green-600 text-3xl">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-            />
-          </svg>
-        </span>
-      </div>
-      <div className="h-16">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData}>
-            <Bar
-              dataKey="value"
-              stroke="#10B981"
-              fill="#10B981"
-              type="monotone"
-              fillOpacity={0.5}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
+    <Card className="w-full transition-all duration-300 hover:shadow-lg">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-lg font-semibold">Total Clubs Registered</CardTitle>
+        <motion.div
+          whileHover={{ scale: 1.2, rotate: 360 }}
+          transition={{ duration: 0.3 }}
+        >
+          <Users className="h-8 w-8 text-muted-foreground" />
+        </motion.div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{totalClubs}</div>
+        <p className="text-xs text-muted-foreground">
+          +{chartData[chartData.length - 1]?.value || 0} from last month
+        </p>
+        <div className="h-[80px] mt-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <XAxis 
+                dataKey="name" 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }}
+              />
+              <YAxis 
+                hide={true}
+              />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="#3b82f6"
+                fillOpacity={1}
+                fill="url(#colorValue)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
+

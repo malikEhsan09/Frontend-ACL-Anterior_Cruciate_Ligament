@@ -1,5 +1,6 @@
-"use client";
-import React, { useState, useEffect, useCallback } from "react";
+"use client"; // Ensure that this component is only client-side
+
+import React, { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -7,320 +8,225 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  Legend,
+  Cell,
 } from "recharts";
-import { format } from "date-fns";
+import { FaArrowUp } from "react-icons/fa"; // Importing the up arrow icon
 
-// Custom legend with rounded dots
-import { LegendProps, DefaultLegendContent } from "recharts";
+const threshold = 7; // Define your threshold value here
 
-const renderLegend = (props: LegendProps) => {
-  const { payload } = props;
-  return (
-    <ul className="flex space-x-4 justify-center mb-4">
-      {payload &&
-        payload.map((entry, index) => (
-          <li key={`item-${index}`} className="flex items-center space-x-2">
-            <div
-              className="h-4 w-4 rounded-full"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span style={{ color: entry.color }}>{entry.value}</span>
-          </li>
-        ))}
-    </ul>
-  );
+// Custom Tooltip Component
+import { TooltipProps } from "recharts";
+
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+}: TooltipProps<number, string>) => {
+  if (active && payload && payload.length) {
+    return (
+      <div
+        className="custom-tooltip"
+        style={{
+          backgroundColor: "#A0C2ED",
+          padding: "10px",
+          borderRadius: "8px", // Rounded border
+          boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)", // Optional shadow for better UI
+        }}
+      >
+        <p className="label" style={{ fontWeight: "bold", color: "black" }}>
+          {`${label} : ${payload[0].value}`}
+        </p>
+      </div>
+    );
+  }
+
+  return null;
 };
 
-renderLegend.defaultProps = DefaultLegendContent.defaultProps;
+// Removed unused getAbbreviatedMonthName function
 
-// Helper function to generate an array with all days of the week
-const generateWeekDays = () => {
-  return [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-  ];
-};
-
-// Abbreviations for week day names
-const abbreviations = {
-  Monday: "Mon",
-  Tuesday: "Tue",
-  Wednesday: "Wed",
-  Thursday: "Thu",
-  Friday: "Fri",
-  Saturday: "Sat",
-  Sunday: "Sun",
-};
-
-const ClubsOverview = () => {
-  // Function to abbreviate week day names
-  const abbreviateDay = (day: keyof typeof abbreviations) => {
-    return abbreviations[day] || day;
-  };
-  const [data, setData] = useState<
-    { name: string; activeClubs: number; inactiveClubs: number }[]
-  >([]);
-  const [activeFilter, setActiveFilter] = useState("All");
-  const [clubCount, setClubCount] = useState(0);
-  const [playerCount, setPlayerCount] = useState(0);
-  const [userCount, setUserCount] = useState(0);
+const PlayersGraph = () => {
+  const [data, setData] = useState<MonthData[]>([]); // State for player registration data
+  const [totalPlayers, setTotalPlayers] = useState(0); // State for total players count
+  const [percentageChange, setPercentageChange] = useState(0); // State for percentage change
+  const [percentageColor, setPercentageColor] = useState("green"); // Color for percentage change
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Function to get the authentication token from localStorage
   const getAuthToken = () => {
     return localStorage.getItem("authToken");
   };
 
-  // Fetch clubs data
-  const fetchClubsData = useCallback(async () => {
-    const authToken = getAuthToken();
-    const headers = new Headers();
-    headers.append("Authorization", `Bearer ${authToken}`);
+  // Group players by month using JavaScript Date methods
+  interface Player {
+    createdAt: string;
+  }
 
-    try {
-      const response = await fetch("http://localhost:8800/api/club", {
-        headers: headers,
-      });
-      if (!response.ok) throw new Error("Failed to fetch clubs data");
-      const clubsData = await response.json();
+  interface MonthData {
+    name: string;
+    value: number;
+  }
 
-      // Prepare a map to hold the number of active and inactive clubs for each day
-      const weekDays = generateWeekDays();
-      const dayMap: Record<
-        string,
-        { activeClubs: number; inactiveClubs: number }
-      > = weekDays.reduce((acc, day) => {
-        acc[day] = { activeClubs: 0, inactiveClubs: 0 };
-        return acc;
-      }, {} as Record<string, { activeClubs: number; inactiveClubs: number }>);
+  // Function to fetch player data from the API
+  useEffect(() => {
+    const groupPlayersByMonth = (players: Player[]): MonthData[] => {
+      const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
 
-      // Populate the map with the data from the fetched clubs
-      clubsData.forEach((club: { createdAt: string; isActive: boolean }) => {
-        const clubCreatedDate = new Date(club.createdAt);
-        const clubDay = format(clubCreatedDate, "EEEE"); // Get full day of the week (Monday, Tuesday, etc.)
-        if (club.isActive) {
-          dayMap[clubDay].activeClubs += 1;
-        } else {
-          dayMap[clubDay].inactiveClubs += 1;
-        }
-      });
-
-      // Convert the dayMap to an array suitable for the chart
-      const processedData = Object.keys(dayMap).map((day) => ({
-        name: day,
-        activeClubs: dayMap[day].activeClubs,
-        inactiveClubs: dayMap[day].inactiveClubs,
+      const playersByMonth: MonthData[] = months.map((month) => ({
+        name: month,
+        value: 0,
       }));
 
-      setData(processedData);
-      setClubCount(clubsData.length);
-    } catch (error) {
-      console.error(error);
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError(String(error));
+      players.forEach((player) => {
+        const playerDate = new Date(player.createdAt);
+        const monthIndex = playerDate.getMonth(); // Get the month index (0-11)
+        playersByMonth[monthIndex].value += 1; // Increment the count for the respective month
+      });
+
+      return playersByMonth;
+    };
+    const fetchPlayerData = async () => {
+      const authToken = getAuthToken();
+      const headers = new Headers();
+      headers.append("Authorization", `Bearer ${authToken}`);
+
+      try {
+        const response = await fetch("http://localhost:8800/api/player", {
+          headers: headers,
+        });
+        if (!response.ok) throw new Error("Failed to fetch players data");
+
+        const playersData = await response.json();
+
+        // Group players by month using createdAt field
+        const groupedData = groupPlayersByMonth(playersData);
+        setData(groupedData);
+
+        // Calculate total players
+        const total = playersData.length;
+        setTotalPlayers(total);
+
+        // Calculate percentage change based on the last two months
+        const currentMonthPlayers =
+          groupedData[new Date().getMonth()]?.value || 0;
+        const previousMonthPlayers =
+          groupedData[new Date().getMonth() - 1]?.value || 0;
+
+        let percentage = 0;
+        if (previousMonthPlayers) {
+          percentage =
+            ((currentMonthPlayers - previousMonthPlayers) /
+              previousMonthPlayers) *
+            100;
+        }
+
+        setPercentageChange(parseFloat(percentage.toFixed(2))); // Round to 2 decimal places
+
+        // Adjust percentage color based on growth or no growth
+        if (currentMonthPlayers === 0 && previousMonthPlayers === 0) {
+          setPercentageColor("yellow"); // No players registered
+        } else if (percentage > 0) {
+          setPercentageColor("green"); // Growth
+        } else {
+          setPercentageColor("yellow"); // No growth, warning state
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error(error.message);
+        } else {
+          console.error("An unknown error occurred");
+        }
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, []); // Added closing parenthesis here for useCallback
+    };
 
-  // Fetch players count
-  const fetchPlayersCount = useCallback(async () => {
-    const authToken = getAuthToken();
-    const headers = new Headers();
-    headers.append("Authorization", `Bearer ${authToken}`);
-
-    try {
-      const response = await fetch("http://localhost:8800/api/player", {
-        headers: headers,
-      });
-      if (!response.ok) throw new Error("Failed to fetch players data");
-      const playersData = await response.json();
-      setPlayerCount(playersData.length); // Assuming playersData is an array of player objects
-    } catch (error) {
-      console.error(error);
-    }
+    fetchPlayerData(); // Fetch data when component mounts
   }, []);
 
-  // Fetch all users count
-  const fetchUsersCount = useCallback(async () => {
-    const authToken = getAuthToken();
-    const headers = new Headers();
-    headers.append("Authorization", `Bearer ${authToken}`);
-
-    try {
-      const response = await fetch("http://localhost:8800/api/auth/users", {
-        headers: headers,
-      });
-      if (!response.ok) throw new Error("Failed to fetch users data");
-      const usersData = await response.json();
-      setUserCount(usersData.length); // Assuming usersData is an array of user objects
-    } catch (error) {
-      console.error(error);
-    }
-  }, []);
-
-  // Handle filter change
-  const handleFilterChange = useCallback(
-    (filter: string) => {
-      setActiveFilter(filter);
-      setLoading(true);
-
-      // Fetch data based on selected filter
-      fetchClubsData();
-      fetchPlayersCount();
-      fetchUsersCount();
-    },
-    [fetchClubsData, fetchPlayersCount, fetchUsersCount]
-  ); // Added closing parenthesis here for useCallback
-
-  useEffect(() => {
-    handleFilterChange(activeFilter); // Fetch initial data on mount
-  }, [activeFilter, handleFilterChange]);
-
-  // Custom Tooltip Component
-  const CustomTooltip = ({
-    active,
-    payload,
-  }: {
-    active?: boolean;
-    payload?: { value: number }[];
-  }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div
-          className="custom-tooltip"
-          style={{
-            backgroundColor: "#1f2937",
-            padding: "10px",
-            borderRadius: "8px",
-            color: "#fff",
-            boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.1)",
-          }}
-        >
-          <p className="label" style={{ fontWeight: "bold" }}>
-            {`Clubs Overview`}
-          </p>
-          <p
-            style={{ color: "#10B981" }}
-          >{`Active Clubs: ${payload[0].value}`}</p>
-          <p
-            style={{ color: "#547ea8" }}
-          >{`Inactive Clubs: ${payload[1].value}`}</p>
-        </div>
-      );
-    }
-    return null;
-  };
-
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error fetching data</p>;
+  if (loading) {
+    return <div>Loading...</div>; // Display loading state while fetching
+  }
 
   return (
-    <div className="bg-gray-100 p-6 rounded-lg">
-      {/* Title and Filter Buttons */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Clubs Overview</h2>
-        <div className="flex space-x-2">
-          {["Week", "Month", "Year", "All"].map((filter) => (
-            <button
-              key={filter}
-              className={`${
-                activeFilter === filter ? "bg-buttonColor" : "bg-gray-300"
-              } text-white px-3 py-1 rounded`}
-              onClick={() => handleFilterChange(filter)}
+    <div>
+      {/* Heading for Player Registrations placed outside the shadow box */}
+      <h2 className="text-2xl font-bold mb-4">Player Registrations</h2>
+
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full ">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center space-x-4">
+            <div>
+              <p className="text-gray-500 text-sm ">Total Players</p>
+              <h1 className="text-3xl font-bold text-black">{totalPlayers}</h1>
+            </div>
+            <div
+              className={`flex items-center bg-${percentageColor}-100 p-1 rounded-md mt-[1.5rem]`}
             >
-              {filter}
+              <FaArrowUp className={`text-${percentageColor}-500`} />{" "}
+              {/* Arrow Icon */}
+              <p
+                className={`text-${percentageColor}-500 text-sm font-bold ml-1`}
+              >
+                {percentageChange}% {/* Dynamic percentage */}
+              </p>{" "}
+              {/* Spacing between arrow and percentage */}
+            </div>
+          </div>
+          <div className="flex space-x-2 items-center">
+            <select className="border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-onHover border-gray-300">
+              <option>All Time</option>
+              <option>Last Year</option>
+              <option>Last Month</option>
+            </select>
+            <button className="text-[#A0C2ED] text-md font-bold no-underline p-2 rounded-md">
+              See All
             </button>
-          ))}
+          </div>
         </div>
-      </div>
 
-      {/* Indicator Buttons for Active and Inactive Clubs */}
-      <div className="flex space-x-4 mb-4">
-        <div className="flex items-center space-x-2">
-          <div className="h-4 w-4 bg-green-500 rounded-full"></div>
-          <p className="text-sm text-gray-700">Active Clubs</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <div className="h-4 w-4 bg-lightBlue rounded-full"></div>
-          <p className="text-sm text-gray-700">Inactive Clubs</p>
-        </div>
-      </div>
-
-      {/* Bar Chart */}
-      <div className="h-72">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={300}>
           <BarChart
             data={data}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }} // Adjusting right margin to fit well
           >
-            <XAxis
-              dataKey="name"
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={abbreviateDay} // Format the day names to abbreviations
-            />
-            <YAxis axisLine={false} tickLine={false} allowDecimals={false} />{" "}
-            {/* Only whole numbers on Y-axis */}
+            <XAxis dataKey="name" />
+            <YAxis />
             <Tooltip
               content={<CustomTooltip />}
-              cursor={{ fill: "rgba(255,255,255,0.1)" }}
-            />
-            <Legend content={(props) => renderLegend(props as LegendProps)} />{" "}
-            {/* Custom Legend */}
-            {/* Bars for active and inactive clubs */}
-            <Bar
-              dataKey="activeClubs"
-              fill="#10B981"
-              minPointSize={5}
-              radius={[10, 10, 0, 0]}
-              barSize={50}
-            />
-            <Bar
-              dataKey="inactiveClubs"
-              radius={[10, 10, 0, 0]}
-              fill="#547ea8"
-              minPointSize={5}
-              barSize={50}
-            />
+              cursor={{ fill: "transparent" }}
+            />{" "}
+            {/* Custom Tooltip with no greyish hover */}
+            <Bar dataKey="value" radius={[10, 10, 0, 0]} barSize={60}>
+              {data.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={entry.value >= threshold ? "#354B75" : "#A0C2ED"} // Threshold for color
+                />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
-      </div>
-
-      {/* Summary Stats with Dynamic Data */}
-      <div className="grid grid-cols-2 gap-4 mt-4">
-        <div>
-          <p className="text-2xl font-bold text-onHover">{clubCount}</p>
-          <p className="text-sm text-gray-600">Total Clubs</p>
-        </div>
-        <div>
-          {/* Calculate active clubs based on fetched data */}
-          <p className="text-2xl font-bold text-onHover">
-            {data[0]?.activeClubs || 0}
-          </p>
-          <p className="text-sm text-gray-600">Active Clubs</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-onHover">{playerCount}</p>
-          <p className="text-sm text-gray-600">Total Players</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-onHover">{userCount}</p>
-          <p className="text-sm text-gray-600">Total Users</p>
-        </div>
       </div>
     </div>
   );
 };
 
-export default ClubsOverview;
+export default PlayersGraph;
+
+
+
+

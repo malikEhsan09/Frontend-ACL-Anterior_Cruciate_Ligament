@@ -164,6 +164,37 @@ const Clubs = () => {
     }
   };
 
+
+
+  const createPromoCode = async (clubId) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        alert("Authorization token not found!");
+        return;
+      }
+      const response = await axios.post(
+        `http://localhost:8800/api/club/${clubId}/promocode`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.status === 200) {
+        // Handle successful promo code creation
+        console.log("Promo code created:", response.data);
+      } else {
+        // Handle error
+        console.error("Error creating promo code:", response.data);
+      }
+    } catch (error) {
+      console.error("Error creating promo code:", error);
+    }
+  };
+
+  
   const handleAddPlayer = async () => {
     if (!playerEmail && !selectedClubId) {
       alert("Please provide a valid email or player ID.");
@@ -192,10 +223,18 @@ const Clubs = () => {
 
       if (response.status === 200) {
         setSuccess(true);
-        setAlertMessage("Player assigned successfully!");
+        // setAlertMessage("Player assigned successfully!");
+        setAlertMessage(`Player assigned successfully! Promo code: ${response.data.promoCode}`);
         setOpenAlert(true);
-        setTimeout(() => setOpenAlert(false), 3000);
+        setTimeout(() => setOpenAlert(false), 5000);
         closePlayerModal(); // Close modal after successful assignment
+        const updatedClubs = await axios.get("http://localhost:8800/api/club", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setClubs(updatedClubs.data);
+
       } else {
         setSuccess(false);
         setAlertMessage(response.data.message);
@@ -459,6 +498,12 @@ const Clubs = () => {
                   >
                     Generate Invite
                   </button> */}
+                     {/* <button
+              className="text-buttonColor hover:cursor-pointer bg-transparent font-bold"
+              onClick={() => createPromoCode(club._id)}
+            >
+              Create Promo
+            </button> */}
                 </div>
               </td>
             </tr>

@@ -29,9 +29,12 @@ const PaymentSuccess = () => {
   }, []);
 
   return (
-    <div>
+    <div style={{ textAlign: "center", marginTop: "50px" }}>
       <h1>Payment Status</h1>
-      <p>{message}</p>
+      <p style={{ color: "green", fontSize: "18px" }}>
+      {message && <span>&#10003; </span>}
+      {message}
+      </p>
     </div>
   );
 };

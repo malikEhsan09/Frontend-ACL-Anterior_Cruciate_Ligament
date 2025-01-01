@@ -1,357 +1,336 @@
 "use client";
 
-import React, { useState } from "react";
-import { ChevronLeft, ChevronRight, CalendarIcon, User, X, Star } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { X } from "lucide-react";
 
-type TimeSlot = {
-  time: string;
+// type Timing = {
+//   startTime: string;
+//   endTime: string;
+//   status: "available" | "booked";
+//   _id: string;
+// };
+interface Timing {
+  startTime: string | Date;
+  endTime: string | Date;
+  status: "available" | "booked";
+  _id: string;
+}
+
+type Slot = {
   day: string;
+  timings: Timing[];
 };
 
 type Doctor = {
-  id: number;
-  name: string;
-  specialty: string;
-  rating: number;
+  _id: string;
+  userName: string;
+  email: string;
+  phoneNumber: string;
+  doctorID: string;
+  specialization: string;
   image: string;
-  timeSlots: TimeSlot[];
+  slots: Slot[];
+};
+
+type AvailableSlot = {
+  day: string;
+  timings: Timing[];
 };
 
 export default function BookAppointment() {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
+  const [isLoadingDoctors, setIsLoadingDoctors] = useState<boolean>(true);
+  const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("");
-  const [appointmentType, setAppointmentType] = useState<"online" | "physical">("physical");
 
-  const daysOfWeek = ["SUN", "MON", "TUE", "WED", "THUR", "FRI", "SAT"];
-  const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
+  useEffect(() => {
+    fetchDoctors();
+    fetchAvailableSlots();
+  }, []);
 
-  const doctors: Doctor[] = [
-    {
-      id: 1,
-      name: "Dr. Ehsan Ahmed",
-      specialty: "Physiotherapist",
-      rating: 4.9,
-      image: "https://i.pravatar.cc/150?img=1",
-      timeSlots: [
-        { time: "9:00 am", day: "MON" },
-        { time: "11:30 am", day: "TUE" },
-        { time: "2:30 pm", day: "WED" }
-      ]
-    },
-    {
-      id: 2,
-      name: "Dr. Sarah Wilson",
-      specialty: "Physiotherapist",
-      rating: 4.8,
-      image: "https://i.pravatar.cc/150?img=2",
-      timeSlots: [
-        { time: "10:00 am", day: "TUE" },
-        { time: "1:30 pm", day: "THU" },
-        { time: "4:00 pm", day: "FRI" }
-      ]
-    },
-    {
-      id: 3,
-      name: "Dr. Sarah Wilson",
-      specialty: "Physiotherapist",
-      rating: 4.8,
-      image: "https://i.pravatar.cc/150?img=2",
-      timeSlots: [
-        { time: "10:00 am", day: "TUE" },
-        { time: "1:30 pm", day: "THU" },
-        { time: "4:00 pm", day: "FRI" }
-      ]
-    },
-    {
-      id: 4,
-      name: "Dr. Sarah Wilson",
-      specialty: "Physiotherapist",
-      rating: 4.8,
-      image: "https://i.pravatar.cc/150?img=2",
-      timeSlots: [
-        { time: "10:00 am", day: "TUE" },
-        { time: "1:30 pm", day: "THU" },
-        { time: "4:00 pm", day: "FRI" }
-      ]
-    },
-    {
-      id: 5,
-      name: "Dr. Sarah Wilson",
-      specialty: "Physiotherapist",
-      rating: 4.8,
-      image: "https://i.pravatar.cc/150?img=2",
-      timeSlots: [
-        { time: "10:00 am", day: "TUE" },
-        { time: "1:30 pm", day: "THU" },
-        { time: "4:00 pm", day: "FRI" }
-      ]
-    },
-    // Add more doctors as needed
-  ];
-
-  const getDaysInMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-  };
-
-  const generateCalendarDays = () => {
-    const daysInMonth = getDaysInMonth(currentDate);
-    const firstDayOfMonth = getFirstDayOfMonth(currentDate);
-    const days = [];
-
-    for (let i = 0; i < firstDayOfMonth; i++) {
-      days.push(
-        <div key={`empty-${i}`} className="h-24 border border-gray-200 rounded-lg" />
+  const fetchDoctors = async () => {
+    try {
+      setIsLoadingDoctors(true);
+      const response = await axios.get<{ schedule: Doctor[] }>(
+        "http://localhost:8800/api/doctor/schedules"
       );
-    }
 
-    for (let i = 1; i <= daysInMonth; i++) {
-      const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), i);
-      days.push(
-        <div
-          key={i}
-          className="h-24 border border-gray-200 p-2 rounded-lg cursor-pointer transition-colors hover:bg-gray-50"
-          onClick={() => {
-            setSelectedDate(date);
-            setIsModalOpen(true);
-            setSelectedDoctor(null);
-          }}
-        >
-          <div className="flex justify-between items-start">
-            <span className="text-sm font-semibold">{i}</span>
-            <div className="flex space-x-1">
-              <CalendarIcon className="h-4 w-4 text-gray-400" />
-              <User className="h-4 w-4 text-gray-400" />
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-blue-600">Book Appointment</div>
-        </div>
+      console.log("doctor schedule", response.data.schedule);
+      setDoctors(response.data.schedule || []);
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+    } finally {
+      setIsLoadingDoctors(false);
+    }
+  };
+
+  const fetchAvailableSlots = async () => {
+    try {
+      setIsLoadingSlots(true);
+      const response = await axios.get<{ availableSlots: AvailableSlot[] }>(
+        "http://localhost:8800/api/appointment/slots"
       );
-    }
 
-    const totalCells = 42;
-    const remainingCells = totalCells - days.length;
-    for (let i = 0; i < remainingCells; i++) {
-      days.push(
-        <div key={`next-${i}`} className="h-24 border border-gray-200 bg-gray-50 rounded-lg">
-          <span className="text-sm text-gray-400">{i + 1}</span>
-        </div>
+      console.log("available time slots ",response.data.availableSlots)
+      setAvailableSlots(response.data.availableSlots || []);
+    } catch (error) {
+      console.error("Error fetching available slots:", error);
+    } finally {
+      setIsLoadingSlots(false);
+    }
+  };
+
+  const handleBookAppointment = async () => {
+    if (!selectedDoctor || !selectedTimeSlot) return;
+
+    const userId = localStorage.getItem("userId");
+    console.log(userId)
+    const authToken = localStorage.getItem("authToken");
+
+    console.log("selected time slot", selectedTimeSlot);
+
+   const [day,startTime,endTime] = selectedTimeSlot.split("/");
+
+    console.log(day); // "Monday"
+console.log(startTime); // "2024-12-11T07:00:00.000Z"
+console.log(endTime); 
+
+    try {
+      const requestData = {
+        playerID: userId, // Replace with authenticated player ID
+        doctorID: selectedDoctor.doctorID,
+        scheduleID: selectedDoctor._id,
+        day,
+        startTime, // Already in ISO format
+        endTime, // Already in ISO format
+        appointmentType: "online", // or "physical" based on your requirements
+      };
+
+      console.log("Booking appointment request:", requestData);
+
+      const response = await axios.post(
+        "http://localhost:8800/api/appointment/book-appointment",
+        requestData,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
       );
-    }
 
-    return days;
-  };
-
-  const navigateMonth = (direction: "prev" | "next") => {
-    setCurrentDate((prevDate) => {
-      const newDate = new Date(prevDate);
-      newDate.setMonth(newDate.getMonth() + (direction === "next" ? 1 : -1));
-      return newDate;
-    });
-  };
-
-  const handleDoctorClick = (doctor: Doctor) => {
-    setSelectedDoctor(doctor);
-  };
-
-  const handleBookAppointment = () => {
-    if (selectedDoctor && selectedTimeSlot) {
-      console.log("Booking appointment:", {
-        doctor: selectedDoctor,
-        date: selectedDate,
-        timeSlot: selectedTimeSlot,
-        type: appointmentType,
-      });
+      alert(response.data.message); // Show success message
+      fetchAvailableSlots(); // Refresh slots data
       setIsModalOpen(false);
       setSelectedDoctor(null);
       setSelectedTimeSlot("");
-      setAppointmentType("physical");
+    } catch (error) {
+      console.error("Error booking appointment:", error);
+      alert("Failed to book appointment. Please try again.");
+    }
+  };
+
+  const formatTiming = (timing: Timing): string => {
+    try {
+      const startTime = new Date(timing.startTime).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      const endTime = new Date(timing.endTime).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      const statusLabel =
+        timing.status === "available" ? "Available" : "Booked";
+      return `${startTime} - ${endTime} (${statusLabel})`;
+    } catch (error) {
+      console.error("Error formatting timing:", error);
+      return "Invalid timing data";
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto p-4 bg-white rounded-xl shadow-lg">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold">
-          {monthNames[currentDate.getMonth()]}, {currentDate.getFullYear()}
-        </h2>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigateMonth("prev")}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigateMonth("next")}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <h2 className="text-2xl font-semibold mb-4">Available Appointments</h2>
 
-      <div className="grid grid-cols-7 gap-2">
-        {daysOfWeek.map((day) => (
-          <div
-            key={day}
-            className="text-center font-semibold py-2 border-b border-gray-200"
-          >
-            {day}
-          </div>
-        ))}
-        {generateCalendarDays()}
-      </div>
+      {isLoadingDoctors || isLoadingSlots ? (
+        <p>Loading available appointments...</p>
+      ) : doctors.length === 0 ? (
+        <p>No available appointments.</p>
+      ) : (
+        <table className="table-auto w-full border-collapse border border-gray-300">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border border-gray-300 px-4 py-2">Doctor</th>
+              <th className="border border-gray-300 px-4 py-2">
+                Specialization
+              </th>
+              <th className="border border-gray-300 px-4 py-2">Email</th>
+              <th className="border border-gray-300 px-4 py-2">Phone</th>
+              <th className="border border-gray-300 px-4 py-2">
+                Available Slots
+              </th>
+              <th className="border border-gray-300 px-4 py-2">Book</th>
+            </tr>
+          </thead>
+          <tbody>
+            {doctors.map((doctor) => (
+              <tr key={doctor._id} className="hover:bg-gray-50">
+                <td className="border border-gray-300 px-4 py-2">
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={doctor.image} alt={doctor.userName} />
+                      <AvatarFallback>
+                        {doctor.userName.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span>{doctor.userName}</span>
+                  </div>
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {doctor.specialization}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {doctor.email}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {doctor.phoneNumber}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {availableSlots.filter((slot) =>
+                    doctor.slots.some(
+                      (doctorSlot) => doctorSlot.day === slot.day
+                    )
+                  ).length > 0 ? (
+                    <div>
+                      {availableSlots
+                        .filter((slot) =>
+                          doctor.slots.some(
+                            (doctorSlot) => doctorSlot.day === slot.day
+                          )
+                        )
+                        .map((slot) => (
+                          <div key={slot.day} className="mb-2">
+                            <strong>{slot.day}:</strong>{" "}
+                            <div className="flex flex-wrap gap-2">
+                              {slot.timings.map((timing) => (
+                                <span
+                                  key={timing._id}
+                                  className="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded"
+                                >
+                                  {formatTiming(timing)}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <span>No available slots</span>
+                  )}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedDoctor(doctor);
+                      console.log("doctor selected", doctor);
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    Book
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[400px] rounded-lg p-0">
-          <DialogHeader className="p-4 pb-0">
-            <DialogTitle className="flex justify-between items-center text-base">
-              {selectedDoctor ? "Book Appointment" : "Doctors Available"}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  if (selectedDoctor) {
-                    setSelectedDoctor(null);
-                  } else {
-                    setIsModalOpen(false);
-                  }
-                }}
-                className="h-6 w-6 rounded-full"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+        <DialogContent className="sm:max-w-[400px] rounded-lg p-4">
+          <DialogHeader>
+            <DialogTitle className="text-lg">
+              Book Appointment with {selectedDoctor?.userName}
             </DialogTitle>
-            <hr className="mt-4 border-gray-200" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setIsModalOpen(false);
+                setSelectedDoctor(null);
+              }}
+              className="absolute right-4 top-4"
+            >
+              <X className="h-5 w-5" />
+            </Button>
           </DialogHeader>
 
-          <div className="p-4 pt-0">
-            {!selectedDoctor ? (
-              <div className="space-y-3">
-                {doctors.map((doctor) => (
-                  <div
-                    key={doctor.id}
-                    className="flex items-center justify-between p-2 rounded-lg transition-colors duration-300 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => handleDoctorClick(doctor)}
-                  >
-                    <div className="flex items-center">
-                      <Avatar className="h-10 w-10 mr-3">
-                        <AvatarImage src={doctor.image} alt={doctor.name} />
-                        <AvatarFallback>
-                          {doctor.name.split(" ").map((n) => n[0]).join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-sm">{doctor.name}</p>
-                        <p className="text-xs text-gray-500">{doctor.specialty}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 mr-1" />
-                      <span className="text-sm">{doctor.rating}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex flex-col items-center space-y-2">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={selectedDoctor.image} alt={selectedDoctor.name} />
-                    <AvatarFallback>
-                      {selectedDoctor.name.split(" ").map((n) => n[0]).join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="text-center">
-                    <h3 className="text-base font-medium">{selectedDoctor.name}</h3>
-                    <p className="text-sm text-gray-500">{selectedDoctor.specialty}</p>
-                    <div className="flex items-center justify-center mt-1">
-                      <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 mr-1" />
-                      <span className="text-sm">{selectedDoctor.rating}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-sm font-medium mb-3">Free Slots</h4>
-                  <RadioGroup
-                    value={selectedTimeSlot}
-                    onValueChange={setSelectedTimeSlot}
-                    className="space-y-2"
-                  >
-                    {selectedDoctor.timeSlots.map((slot) => (
-                      <div
-                        key={`${slot.day}-${slot.time}`}
-                        className="flex items-center space-x-2 rounded-md border p-2"
-                      >
-                        <RadioGroupItem 
-                          value={`${slot.day}-${slot.time}`} 
-                          id={`${slot.day}-${slot.time}`}
-                          className="h-3 w-3"
-                        />
-                        <Label 
-                          htmlFor={`${slot.day}-${slot.time}`} 
-                          className="text-sm cursor-pointer"
+          {selectedDoctor && (
+            <div>
+              <h3 className="text-sm font-medium mb-3">Available Slots</h3>
+              <RadioGroup
+                value={selectedTimeSlot}
+                onValueChange={setSelectedTimeSlot}
+                className="space-y-2"
+              >
+                {availableSlots
+                  .filter((slot) =>
+                    selectedDoctor.slots.some(
+                      (doctorSlot) => doctorSlot.day === slot.day
+                    )
+                  )
+                  .map((slot) => (
+                    <div key={slot.day} className="mb-2">
+                      <h4 className="text-sm font-medium">{slot.day}</h4>
+                      {slot.timings.map((timing) => (
+                        <div
+                          key={timing._id}
+                          className="flex items-center space-x-2 rounded-md border p-2 mb-2 text-black"
                         >
-                          {slot.day}, {slot.time}
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </div>
+                          <RadioGroupItem
+                            value={`${slot.day}/${timing.startTime}/${timing.endTime}`} // Send both startTime and endTime
+                            id={`${slot.day}-${timing.startTime}`}
+                          />
+                          <Label
+                            htmlFor={`${slot.day}-${timing.startTime}`}
+                            className="text-sm"
+                          >
+                            {formatTiming(timing)}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+              </RadioGroup>
 
-                <div className="flex gap-2 mt-4">
-                  <Button
-                    variant={appointmentType === "online" ? "buttonColor" : "outline"}
-                    onClick={() => setAppointmentType("online")}
-                    className="flex-1 text-xs h-8"
-                  >
-                    Online
-                  </Button>
-                  <Button
-                    variant={appointmentType === "physical" ? "buttonColor" : "outline"}
-                    onClick={() => setAppointmentType("physical")}
-                    className="flex-1 text-xs h-8"
-                  >
-                    Physical
-                  </Button>
-                </div>
-
-                <Button
-                  className="w-full text-xs h-8 bg-buttonColor hover:bg-onHover/900"
-                  disabled={!selectedTimeSlot}
-                  onClick={handleBookAppointment}
-                >
-                  Book Appointment
-                </Button>
-              </div>
-            )}
-          </div>
+              <Button
+                className="mt-4 w-full"
+                onClick={handleBookAppointment}
+                disabled={!selectedTimeSlot}
+              >
+                Confirm Appointment
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
   );
 }
-
