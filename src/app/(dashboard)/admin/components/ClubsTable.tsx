@@ -1,10 +1,19 @@
 "use client";
 import React, { useState, useEffect } from "react";
 
+interface Club {
+  _id: string;
+  clubName: string;
+  clubLogo?: string;
+  isActive: boolean;
+  createdAt: string;
+  clubLocation?: string;
+}
+
 const ClubsTable = () => {
-  const [clubs, setClubs] = useState([]); // State to store the club data
+  const [clubs, setClubs] = useState<Club[]>([]); // State to store the club data
   const [loading, setLoading] = useState(true); // Loading state
-  const [error, setError] = useState(null); // Error state
+  const [error, setError] = useState<string | null>(null); // Error state
 
   // Function to get the authentication token from localStorage
   const getAuthToken = () => {
@@ -25,7 +34,11 @@ const ClubsTable = () => {
       const clubData = await response.json();
       setClubs(clubData); // Set the fetched club data
     } catch (error) {
-      setError(error.message);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }

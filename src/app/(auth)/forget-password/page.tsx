@@ -3,7 +3,7 @@ import Image from "next/image";
 import { MdArrowBack } from "react-icons/md";
 import football from "@/public/assets/football.svg";
 import Link from "next/link";
-import { useState } from "react";
+import React, { useState } from "react";
 import { FaCheckCircle } from "react-icons/fa"; // Add the check icon for success
 import { useRouter } from "next/navigation"; // Import Next.js router for redirection
 
@@ -13,7 +13,7 @@ export default function ResetPassword() {
   const [alertType, setAlertType] = useState(""); // State to manage alert type (success or error)
   const router = useRouter(); // Next.js router instance for redirection
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setAlertMessage(""); // Reset alert message
 

@@ -2,8 +2,13 @@
 
 import { useEffect, useRef } from "react";
 
-export default function AnimateOnScroll({ children, animationClass }) {
-  const elementRef = useRef(null);
+interface AnimateOnScrollProps {
+  children: React.ReactNode;
+  animationClass: string;
+}
+
+export default function AnimateOnScroll({ children, animationClass }: AnimateOnScrollProps) {
+  const elementRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(

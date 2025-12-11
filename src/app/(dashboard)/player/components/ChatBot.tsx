@@ -900,7 +900,6 @@ import "tailwindcss/tailwind.css";
 
 import * as React from "react";
 import { Button } from "@/components/ui/button";
-import axios from "axios";
 import {
   Card,
   CardContent,

@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { Doctor } from '../page';
 
-interface Doctor {
+interface NewDoctor {
   name: string;
   speciality: string;
   designation: string;
@@ -8,14 +9,13 @@ interface Doctor {
   experience: string;
   location: string;
   profileImage: File | null;
-  _id?: string;
 }
 
 interface AddEditDoctorModalProps {
   editingDoctor: Doctor | null;
-  newDoctor: Doctor;
+  newDoctor: NewDoctor;
   setEditingDoctor: (doctor: Doctor | null) => void;
-  setNewDoctor: (doctor: Doctor) => void;
+  setNewDoctor: (doctor: NewDoctor) => void;
   setDoctors: (doctors: Doctor[]) => void;
   setIsModalOpen: (isOpen: boolean) => void;
   handleAlert: (message: string, success: boolean) => void;
@@ -38,11 +38,25 @@ const AddEditDoctorModal = ({
         e.preventDefault();
         const adminId = localStorage.getItem("userId");
         const formData = new FormData();
-        const doctorData: FormDataDoctor = editingDoctor || newDoctor;
+        
+        // Convert editingDoctor or newDoctor to FormDataDoctor format
+        const doctorData: FormDataDoctor = editingDoctor 
+            ? {
+                ...editingDoctor,
+                profileImage: editingDoctor.profileImage instanceof File 
+                    ? editingDoctor.profileImage 
+                    : null
+              }
+            : newDoctor;
 
         (Object.keys(doctorData) as (keyof FormDataDoctor)[]).forEach((key) => {
-            if (doctorData[key] != null) {
-                formData.append(key, doctorData[key] as string | File);
+            if (doctorData[key] != null && key !== '_id' && key !== 'createdAt' && key !== 'viewCount' && key !== 'rating') {
+                const value = doctorData[key];
+                if (value instanceof File) {
+                    formData.append(key, value);
+                } else if (typeof value === 'string') {
+                    formData.append(key, value);
+                }
             }
         });
         formData.append("createdBy", adminId || "");
@@ -94,13 +108,15 @@ const AddEditDoctorModal = ({
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              {(["name", "speciality", "designation", "degree", "experience", "location"] as (keyof Doctor)[]).map((field) => (
+              {(["name", "speciality", "designation", "degree", "experience", "location"] as const).map((field) => (
                 <div key={field}>
                   <input
                     className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     type="text"
                     placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                    value={editingDoctor ? (typeof editingDoctor[field] === 'string' ? editingDoctor[field] : '') : (typeof newDoctor[field] === 'string' ? newDoctor[field] : '')}
+                    value={editingDoctor 
+                      ? (typeof editingDoctor[field] === 'string' ? editingDoctor[field] : '') 
+                      : newDoctor[field] || ''}
                     onChange={(e) =>
                       editingDoctor
                         ? setEditingDoctor({ ...editingDoctor, [field]: e.target.value })

@@ -4,6 +4,10 @@ import { motion } from "framer-motion";
 import { IconUpload, IconX } from "@tabler/icons-react";
 import { useDropzone } from "react-dropzone";
 
+interface FileUploadProps {
+  onChange?: (files: File[]) => void;
+}
+
 const mainVariant = {
   initial: {
     x: 0,
@@ -25,10 +29,10 @@ const secondaryVariant = {
   },
 };
 
-export const FileUpload = ({ onChange }) => {
+export const FileUpload: React.FC<FileUploadProps> = ({ onChange }) => {
   const [files, setFiles] = useState<File[]>([]);
-  const [error, setError] = useState(null); // Error state to handle invalid files
-  const fileInputRef = useRef(null);
+  const [error, setError] = useState<string | null>(null); // Error state to handle invalid files
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const allowedExtensions = [".npy", ".pck"];
 
@@ -57,7 +61,7 @@ export const FileUpload = ({ onChange }) => {
     setFiles(updatedFiles);
   };
 
-  const { getRootProps, isDragActive } = useDropzone({
+  const { getRootProps } = useDropzone({
     multiple: false, // Restrict to 1 file only
     noClick: true,
     onDrop: handleFileChange,

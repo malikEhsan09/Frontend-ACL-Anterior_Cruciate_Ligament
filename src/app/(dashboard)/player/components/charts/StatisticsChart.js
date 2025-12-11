@@ -1,14 +1,10 @@
 import React from "react";
-import { Card, CardContent, Typography, IconButton, Box } from "@mui/material";
-import KeyboardDoubleArrowUpIcon from "@mui/icons-material/KeyboardDoubleArrowUp";
-import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
+import { Card, CardContent, Typography, Box } from "@mui/material";
 
 export default function StatisticsCards({
   amount,
   text,
   icon,
-  percentage,
-  trend,
 }) {
   return (
     <Card>

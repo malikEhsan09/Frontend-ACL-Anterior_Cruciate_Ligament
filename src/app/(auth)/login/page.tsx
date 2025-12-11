@@ -95,7 +95,7 @@ export default function Login() {
         <div className="absolute inset-0 bg-blue-900 opacity-50"></div>
         <div className="absolute inset-0 flex flex-col justify-end p-10 text-white z-10">
           <h2 className="text-4xl font-semibold mb-4">
-            Let's empower your financial task today with Findash.
+            Let&apos;s empower your financial task today with Findash.
           </h2>
           <p className="text-lg">
             The one-stop platform for all financial management of small and
@@ -189,7 +189,7 @@ export default function Login() {
           </div>
 
           <p className="mt-4 text-center text-gray-600">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href={"/signup"} className="text-blue-600 hover:underline">
               Register Here
             </Link>

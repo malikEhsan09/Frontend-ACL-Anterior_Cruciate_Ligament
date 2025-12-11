@@ -161,6 +161,13 @@ const AdminSettings = () => {
     }
   };
 
+  const imageSrc: string =
+    typeof window !== "undefined" &&
+    typeof File !== "undefined" &&
+    profileInfo?.image instanceof File
+      ? URL.createObjectURL(profileInfo.image)
+      : (profileInfo?.image as string | null) || "/default-profile.png";
+
   return (
     <div className="p-6 bg-white min-h-screen">
       {open && (
@@ -188,11 +195,7 @@ const AdminSettings = () => {
           </div>
           <div className="flex items-center">
             <Image
-              src={
-                profileInfo?.image instanceof File
-                  ? URL.createObjectURL(profileInfo.image)
-                  : profileInfo?.image || "/default-profile.png"
-              }
+              src={imageSrc}
               alt="Profile"
               width={64}
               height={64}

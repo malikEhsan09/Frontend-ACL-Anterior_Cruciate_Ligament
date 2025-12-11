@@ -1,5 +1,4 @@
 "use client";
-import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
 import { Settings, LogOut, User } from 'lucide-react';
 import Image from "next/image";
@@ -15,7 +14,6 @@ interface TopbarProps {
 const Topbar: React.FC<TopbarProps> = ({
   className = "",
   title = "Dashboard",
-  isSidebarCollapsed,
   userImage,
 }) => {
   const [userName, setUserName] = useState("");
@@ -114,12 +112,6 @@ const Topbar: React.FC<TopbarProps> = ({
       </div>
     </header>
   );
-};
-
-Topbar.propTypes = {
-  className: PropTypes.string,
-  isSidebarCollapsed: PropTypes.bool,
-  userImage: PropTypes.string.isRequired,
 };
 
 export default Topbar;

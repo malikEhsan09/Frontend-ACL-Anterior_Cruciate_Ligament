@@ -238,7 +238,6 @@ const Sidebar = ({ isCollapsed: initialCollapsed = false, onToggle }:SidebarProp
   const router = useRouter();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(initialCollapsed);
-  const [activePath, setActivePath] = useState<string>("/admin/");
 
 
   // Toggle collapse state
@@ -250,7 +249,6 @@ const Sidebar = ({ isCollapsed: initialCollapsed = false, onToggle }:SidebarProp
 
   const handleNavigation = (path : string) => {
     router.push(path); // Navigate to the chosen path
-    setActivePath(path)
   };
 
   const handleLogout = async () => {
@@ -332,7 +330,6 @@ const Sidebar = ({ isCollapsed: initialCollapsed = false, onToggle }:SidebarProp
               key={item.name}
               icon={item.icon}
               name={item.name}
-              path={item.path}
               isCollapsed={isCollapsed}
               onClick={() => handleNavigation(item.path)}
               isActive={pathname === item.path} // Check if the current path matches the menu item path
@@ -345,7 +342,6 @@ const Sidebar = ({ isCollapsed: initialCollapsed = false, onToggle }:SidebarProp
           <SidebarItem
             icon={<LogOut />}
             name="Logout"
-            path="/logout"
             isCollapsed={isCollapsed}
             onClick={handleLogout}
             isActive={pathname === "/logout"}
@@ -368,7 +364,15 @@ const Sidebar = ({ isCollapsed: initialCollapsed = false, onToggle }:SidebarProp
   );
 };
 
-const SidebarItem = ({ icon, name, isCollapsed, onClick, isActive }) => {
+interface SidebarItemProps {
+  icon: React.ReactNode;
+  name: string;
+  isCollapsed: boolean;
+  onClick: () => void;
+  isActive: boolean;
+}
+
+const SidebarItem = ({ icon, name, isCollapsed, onClick, isActive }: SidebarItemProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
 
   return (

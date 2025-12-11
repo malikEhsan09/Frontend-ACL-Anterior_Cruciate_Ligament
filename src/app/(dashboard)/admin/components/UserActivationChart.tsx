@@ -9,7 +9,12 @@ import {
 } from "recharts";
 
 // Custom Tooltip Component
-const CustomTooltip = ({ active, payload }) => {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: { name?: string; value?: number }[];
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload }) => {
   if (active && payload && payload.length) {
     return (
       <div
@@ -31,10 +36,16 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
+interface ChartDataItem {
+  name: string;
+  value: number;
+  fill: string;
+}
+
 const UserActivationChart = () => {
-  const [data, setData] = useState([]); // State to store the data
+  const [data, setData] = useState<ChartDataItem[]>([]); // State to store the data
   const [loading, setLoading] = useState(true); // Loading state
-  const [error, setError] = useState(null); // Error state
+  const [error, setError] = useState<string | null>(null); // Error state
 
   const getAuthToken = () => {
     return localStorage.getItem("authToken");
@@ -70,7 +81,7 @@ const UserActivationChart = () => {
       const adminsData = await adminsResponse.json();
 
       // Prepare the chart data
-      const chartData = [
+      const chartData: ChartDataItem[] = [
         {
           name: "Players",
           value: playersData.length,
@@ -91,7 +102,11 @@ const UserActivationChart = () => {
       // Update state with the chart data
       setData(chartData);
     } catch (error) {
-      setError(error.message);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -128,13 +143,7 @@ const UserActivationChart = () => {
           angleAxisId={0}
           tick={false}
         />
-        <RadialBar
-          minAngle={15}
-          background
-          clockWise
-          dataKey="value"
-          cornerRadius={10} // Rounded bar ends
-        />
+        <RadialBar background dataKey="value" />
         <Tooltip
           content={<CustomTooltip />}
           cursor={false} // Disable the hover line (cursor)

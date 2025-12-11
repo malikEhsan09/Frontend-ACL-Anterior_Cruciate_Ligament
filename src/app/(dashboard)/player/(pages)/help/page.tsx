@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/accordion";
 
 export default function ACLFAQAccordion() {
-  const [activeItem, setActiveItem] = useState<string | null>(null);
+  const [activeItem, setActiveItem] = useState<string | undefined>(undefined);
 
   const faqItems = [
     {

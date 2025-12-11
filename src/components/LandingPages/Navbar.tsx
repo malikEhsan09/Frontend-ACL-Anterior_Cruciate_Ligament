@@ -281,7 +281,7 @@ export default function Navbar() {
                 variant="ghost"
                 size="sm"
                 className="ml-2 rounded-full"
-                onClick={() => router.push("/signUp")}
+                onClick={() => router.push("/signup")}
               >
                 <UserPlus className="h-4 w-4 mr-1" />
                 <span className="text-sm">Sign Up</span>

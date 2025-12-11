@@ -8,25 +8,37 @@ import ViewDoctorModal from "./modal/view-doctor.modal";
 import DeleteDoctorModal from "./modal/delete-doctor.modal";
 import Pagination from "./doctor-components/pagination";
 
+export interface Doctor {
+  _id?: string;
+  name: string;
+  speciality: string;
+  designation?: string;
+  degree?: string;
+  experience?: string;
+  location: string;
+  profileImage?: string | File | null;
+  createdAt?: string;
+  viewCount?: number;
+  rating?: number | string;
+}
+
 const Doctors = () => {
   const dataPerPage = 7;
   const [currentPage, setCurrentPage] = useState(1);
-  interface Doctor {
+
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [sortOrder, setSortOrder] = useState("Newest");
+  const [newDoctor, setNewDoctor] = useState<{
     name: string;
     speciality: string;
     designation: string;
     degree: string;
     experience: string;
     location: string;
-    profileImage?: string;
-    createdAt: string;
-  }
-
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [totalPages, setTotalPages] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [sortOrder, setSortOrder] = useState("Newest");
-  const [newDoctor, setNewDoctor] = useState({
+    profileImage: File | null;
+  }>({
     name: "",
     speciality: "",
     designation: "",
@@ -67,11 +79,11 @@ const Doctors = () => {
         sortOrder === "Newest"
           ? doctorData.sort(
               (a: Doctor, b: Doctor) =>
-                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                (b.createdAt ? new Date(b.createdAt).getTime() : 0) - (a.createdAt ? new Date(a.createdAt).getTime() : 0)
             )
           : doctorData.sort(
               (a: Doctor, b: Doctor) =>
-                new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                (a.createdAt ? new Date(a.createdAt).getTime() : 0) - (b.createdAt ? new Date(b.createdAt).getTime() : 0)
             );
 
       setDoctors(sortedData);
@@ -170,7 +182,17 @@ const Doctors = () => {
           editingDoctor={editingDoctor}
           newDoctor={newDoctor}
           setEditingDoctor={setEditingDoctor}
-          setNewDoctor={setNewDoctor}
+          setNewDoctor={(doctor) => {
+            setNewDoctor({
+              name: doctor.name,
+              speciality: doctor.speciality,
+              designation: doctor.designation || "",
+              degree: doctor.degree || "",
+              experience: doctor.experience || "",
+              location: doctor.location,
+              profileImage: doctor.profileImage instanceof File ? doctor.profileImage : null,
+            });
+          }}
           setDoctors={setDoctors}
           setIsModalOpen={setIsModalOpen}
           handleAlert={handleAlert}

@@ -18,7 +18,7 @@ const Admin = () => {
   const [totalDoctors, setTotalDoctors] = useState(0);
   const [totalUsers, setTotalUsers] = useState(0); // New state for total users
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const commonColor = "bg-[#354B75]";
 
   // Function to get the authentication token from localStorage
@@ -42,7 +42,11 @@ const Admin = () => {
       // Set the total number of players
       setTotalPlayers(playersData.length);
     } catch (error) {
-      setError(error.message);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -66,7 +70,11 @@ const Admin = () => {
       // Set the total number of clubs
       setTotalClubs(clubsData.length);
     } catch (error) {
-      setError(error.message);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -90,7 +98,11 @@ const Admin = () => {
       // Set the total number of doctors
       setTotalDoctors(doctorData.length);
     } catch (error) {
-      setError(error.message);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -112,7 +124,11 @@ const Admin = () => {
       // Set the total number of users
       setTotalUsers(usersData.length);
     } catch (error) {
-      setError(error.message);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -141,7 +157,7 @@ const Admin = () => {
           title="Total Players"
           value={totalPlayers}
           description="+8% from yesterday"
-          // percentageChange="+8% from yesterday"
+          percentageChange="+8% from yesterday"
           bgColor={commonColor}
           icon={<User />}
         />
@@ -149,7 +165,7 @@ const Admin = () => {
           title="Total Clubs"
           value={totalClubs} // Dynamically pass totalClubs
           description="+8% from yesterday"
-          // percentageChange="+8% from yesterday"
+          percentageChange="+8% from yesterday"
           bgColor={commonColor}
           icon={<ShieldCheck />}
         />
@@ -157,7 +173,7 @@ const Admin = () => {
           title="Total Users"
           value={totalUsers} // Dynamically pass totalUsers
           description="+8% from yesterday"
-          // percentageChange="+8% from yesterday"
+          percentageChange="+8% from yesterday"
           bgColor={commonColor}
           icon={<Users />}
         />
@@ -165,7 +181,7 @@ const Admin = () => {
           title="Total Doctors"
           value={totalDoctors}
           description="+8% from yesterday"
-          // percentageChange="+8% from yesterday"
+          percentageChange="+8% from yesterday"
           bgColor={commonColor}
           icon={<Stethoscope />}
         />

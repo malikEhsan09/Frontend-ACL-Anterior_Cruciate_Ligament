@@ -1,9 +1,22 @@
+import React from "react";
 import { Phone } from "lucide-react";
 import { BsFileEarmarkMedicalFill } from "react-icons/bs";
 import { FaHandsHoldingCircle } from "react-icons/fa6";
 
+interface DoctorFormData {
+  medicalLicenseNo: string;
+  specialization: string;
+  phoneNumber: string;
+  [key: string]: string | boolean; // Allow other properties
+}
+
+interface DoctorFormProps {
+  formData: DoctorFormData;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
 // components/DoctorForm.js
-export default function DoctorForm({ formData, handleChange }) {
+export default function DoctorForm({ formData, handleChange }: DoctorFormProps) {
     return (
       <div>
         <div className="mb-4 relative">

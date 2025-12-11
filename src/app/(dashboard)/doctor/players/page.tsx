@@ -7,16 +7,10 @@ import {
   Eye,
   Trash2,
   Edit,
-  Plus,
-  Calendar,
-  Clock,
 } from "lucide-react";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,6 +58,7 @@ export default function DoctorSchedule() {
 
   useEffect(() => {
     fetchSchedules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchSchedules = async () => {
@@ -207,7 +202,6 @@ export default function DoctorSchedule() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              // onClick={() => handleViewSchedule(schedule)}
                             >
                               <Eye className="h-5 w-5" />
                             </Button>
@@ -223,7 +217,6 @@ export default function DoctorSchedule() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleEditSchedule(schedule)}
                             >
                               <Edit className="h-5 w-5" />
                             </Button>

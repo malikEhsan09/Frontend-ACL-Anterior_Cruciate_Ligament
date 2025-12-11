@@ -1,9 +1,8 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
-import { Bar, BarChart } from "recharts"
 import { motion } from "framer-motion"
 import { Users } from 'lucide-react'
 
@@ -39,7 +38,7 @@ export default function TotalClubs() {
           return d.toISOString().slice(0, 7) // YYYY-MM format
         }).reverse()
 
-        const monthlyData = last6Months.map((month, index) => ({
+        const monthlyData = last6Months.map((month) => ({
           name: new Date(month).toLocaleString('default', { month: 'short' }),
           value: clubsData.filter((club: { createdAt: string }) => 
             club.createdAt.startsWith(month)

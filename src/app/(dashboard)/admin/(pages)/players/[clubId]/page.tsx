@@ -26,7 +26,7 @@ interface Player {
 
 const ClubPlayersPage: React.FC = () => {
   const router = useRouter();
-  const { clubId, players: playerIds } = router.query; // Get the clubId and playerIds from the URL
+  const { players: playerIds } = router.query; // Get the playerIds from the URL
   const [players, setPlayers] = useState<Player[]>([]);
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);

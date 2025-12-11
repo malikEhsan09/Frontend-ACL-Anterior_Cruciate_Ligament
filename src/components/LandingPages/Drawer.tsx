@@ -4,7 +4,12 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Sun } from 'lucide-react';
 
-const Drawer = ({ isOpen, toggleDrawer }) => {
+interface DrawerProps {
+  isOpen: boolean;
+  toggleDrawer: () => void;
+}
+
+const Drawer: React.FC<DrawerProps> = ({ isOpen, toggleDrawer }) => {
   return (
     <div
       className={`fixed inset-0 bg-white shadow-lg transform transition-transform duration-300 ${

@@ -1,14 +1,6 @@
 import { Eye, Trash, Edit3 } from "lucide-react";
 import Image from "next/image";
-
-interface Doctor {
-  profileImage?: string;
-  name: string;
-  speciality: string;
-  location: string;
-  viewCount?: number;
-  rating?: number | string;
-}
+import { Doctor } from "../page";
 
 interface DoctorsTableProps {
   currentData: Doctor[];
@@ -44,7 +36,7 @@ const DoctorsTable: React.FC<DoctorsTableProps> = ({
         <tr key={index} className="border-t">
           <td className="py-3 px-6 text-primary font-bold">{index + 1}</td>
           <td className="py-3 px-6">
-            {doctor.profileImage ? (
+            {doctor.profileImage && typeof doctor.profileImage === "string" ? (
               <Image
                 src={doctor.profileImage}
                 alt="Doctor"

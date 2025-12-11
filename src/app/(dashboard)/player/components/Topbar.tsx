@@ -1,5 +1,4 @@
 "use client";
-import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
 import { Settings, LogOut, User } from "lucide-react"; // Import icons
 import Image from "next/image";
@@ -124,11 +123,6 @@ const Topbar: React.FC<TopbarProps> = ({
       </div>
     </header>
   );
-};
-
-Topbar.propTypes = {
-  className: PropTypes.string,
-  isSidebarCollapsed: PropTypes.bool,
 };
 
 export default Topbar;

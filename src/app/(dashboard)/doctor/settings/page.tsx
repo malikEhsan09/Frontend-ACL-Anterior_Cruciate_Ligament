@@ -2,13 +2,13 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { FaCheckCircle } from "react-icons/fa"; // Import check icon for alert
-import Modal from "react-modal"; // Modal for editing the profile details
+import Modal, { Styles } from "react-modal"; // Modal for editing the profile details
 import { useRouter } from "next/navigation"; // Import the router to redirect if necessary
 // import "./laoder.css"; // Import the loader styles
 import { Loader } from "lucide-react";
 
 // Set default styles for Modal overlay and content
-const customStyles = {
+const customStyles: Styles = {
   content: {
     top: "50%",
     left: "50%",
@@ -34,7 +34,7 @@ interface ProfileInfo {
   lastName: string;
   gender: string;
   phoneNumber: string;
-  image: string | null;
+  image: string | File | null;
   email: string;
   medicalLicenseNo: string;
   specialization: string;
@@ -43,10 +43,10 @@ interface ProfileInfo {
 }
 
 interface SettingsProps {
-  onUpdateProfileImage: (image: string) => void;
+  onUpdateProfileImage?: (image: string | File) => void;
 }
 
-const Settings: React.FC<SettingsProps> = ({ onUpdateProfileImage  }) => {
+const Settings: React.FC<SettingsProps> = ({ onUpdateProfileImage }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [open, setOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
@@ -118,16 +118,9 @@ const Settings: React.FC<SettingsProps> = ({ onUpdateProfileImage  }) => {
     fetchProfileData();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-
-    // Calculate age when the date of birth is changed
-    if (name === "dateOfBirth") {
-      const age = calculateAge(value); // Calculate the age from the date of birth
-      setProfileInfo({ ...profileInfo, [name]: value, age: age.toString() });
-    } else {
-      setProfileInfo({ ...profileInfo, [name]: value });
-    }
+    setProfileInfo({ ...profileInfo, [name]: value });
   };
 
   // Handle image change
@@ -138,10 +131,6 @@ const Settings: React.FC<SettingsProps> = ({ onUpdateProfileImage  }) => {
     }
   };
 
-  // Toggle the editing state and open the modal
-  const handleEditToggle = () => {
-    setIsEditing(!isEditing);
-  };
 
   // Handle modal close
   const closeModal = () => {
@@ -191,7 +180,7 @@ const Settings: React.FC<SettingsProps> = ({ onUpdateProfileImage  }) => {
         const updatedProfile = await response.json();
 
         // Call the callback to update the profile image in PlayerLayout
-        if (updatedProfile.image) {
+        if (updatedProfile.image && onUpdateProfileImage) {
           onUpdateProfileImage(updatedProfile.image); // Notify layout of the new image
         }
 
@@ -489,4 +478,7 @@ const Settings: React.FC<SettingsProps> = ({ onUpdateProfileImage  }) => {
   );
 };
 
-export default Settings;
+// Default export for Next.js page (no props)
+export default function SettingsPage() {
+  return <Settings />;
+}

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Eye, Trash, Edit3 } from "lucide-react";
+import Image from "next/image";
 import axios from "axios";
 
 const Admins = () => {
@@ -11,7 +12,12 @@ const Admins = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState("Newest");
   const [loggedInAdminId, setLoggedInAdminId] = useState<string | null>(null); // To store the logged-in admin's ID
-  const [newAdmin, setNewAdmin] = useState({
+  const [newAdmin, setNewAdmin] = useState<{
+    name: string;
+    phoneNumber: string;
+    CNIC: string;
+    image: File | null;
+  }>({
     name: "",
     phoneNumber: "",
     CNIC: "",
@@ -22,7 +28,7 @@ const Admins = () => {
     name: string;
     phoneNumber: string;
     CNIC: string;
-    image: File | null;
+    image: string | File | null;
     createdAt: string;
     userID: { _id: string }; // Add userID property
   }
@@ -170,7 +176,7 @@ const Admins = () => {
     }
   };
 
-  const handleDeleteAdmin = async (adminId) => {
+  const handleDeleteAdmin = async (adminId: string) => {
     try {
       const token = localStorage.getItem("authToken");
       await axios.delete(`http://localhost:8800/api/admin/${adminId}`, {
@@ -265,11 +271,13 @@ const Admins = () => {
             <tr key={index} className="border-t">
               <td className="py-3 px-6 text-blue-600 font-bold">{index + 1}</td>
               <td className="py-3 px-6">
-                {admin.image ? (
-                  <img
+                {admin.image && typeof admin.image === "string" ? (
+                  <Image
                     src={admin.image}
                     alt="Admin"
-                    className="w-10 h-10 rounded-full"
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 rounded-full object-cover"
                   />
                 ) : (
                   "N/A"
@@ -280,12 +288,6 @@ const Admins = () => {
               <td className="py-3 px-6">{admin.CNIC || "N/A"}</td>
               {/* Status */}
               <td className="py-3 px-6">
-                {console.log(
-                  "Admin User ID:",
-                  admin.userID._id,
-                  "Logged-in User ID:",
-                  localStorage.getItem("userId")
-                )}
                 {localStorage.getItem("userId") === admin.userID._id ? (
                   <span className="bg-green-200 text-green-800 py-1 px-3 rounded-full text-xs">
                     Active
@@ -391,11 +393,19 @@ const Admins = () => {
               Admin Details
             </h2>
             <div className="flex flex-col items-center">
-              <img
-                src={viewingAdmin.image}
-                alt="Admin"
-                className="w-24 h-24 rounded-full mb-4"
-              />
+              {viewingAdmin.image && typeof viewingAdmin.image === "string" ? (
+                <Image
+                  src={viewingAdmin.image}
+                  alt="Admin"
+                  width={96}
+                  height={96}
+                  className="w-24 h-24 rounded-full mb-4 object-cover"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full mb-4 bg-gray-200 flex items-center justify-center">
+                  N/A
+                </div>
+              )}
               <p className="text-lg font-semibold text-lightBlue">
                 {viewingAdmin.name}
               </p>
@@ -435,7 +445,7 @@ const Admins = () => {
               </button>
               <button
                 className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
-                onClick={() => handleDeleteAdmin(adminToDelete._id)}
+                onClick={() => adminToDelete && handleDeleteAdmin(adminToDelete._id)}
               >
                 Delete
               </button>
@@ -535,17 +545,20 @@ const Admins = () => {
                   <input
                     className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-lightBlue file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-lightBlue file:text-white hover:file:bg-blue-600"
                     type="file"
-                    onChange={(e) =>
-                      editingAdmin
-                        ? setEditingAdmin({
-                            ...editingAdmin,
-                            image: e.target.files[0],
-                          })
-                        : setNewAdmin({
-                            ...newAdmin,
-                            image: e.target.files[0],
-                          })
-                    }
+                    onChange={(e) => {
+                      const file: File | null = e.target.files?.[0] || null;
+                      if (editingAdmin) {
+                        setEditingAdmin({
+                          ...editingAdmin,
+                          image: file,
+                        });
+                      } else {
+                        setNewAdmin({
+                          ...newAdmin,
+                          image: file,
+                        });
+                      }
+                    }}
                   />
                 </div>
               </div>

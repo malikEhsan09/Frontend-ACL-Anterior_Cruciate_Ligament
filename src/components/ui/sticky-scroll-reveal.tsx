@@ -12,12 +12,12 @@ export const StickyScroll = ({
     title: string;
     description: string;
     icon?: React.ReactNode;
-    content?: React.ReactNode | any;
+    content?: React.ReactNode;
   }[];
   contentClassName?: string;
 }) => {
   const [activeCard, setActiveCard] = React.useState(0);
-  const ref = useRef<any>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     container: ref,
     offset: ["start start", "end start"],
@@ -56,6 +56,7 @@ export const StickyScroll = ({
 
   useEffect(() => {
     setBackgroundColor(backgroundColors[activeCard % backgroundColors.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCard]);
 
   return (

@@ -2,7 +2,11 @@
 import React from "react";
 import { HoverBorderGradient } from "../ui/hover-border-gradient";
 
-export default function HoverBorderGradientDemo({ button }) {
+interface HoverBorderGradientDemoProps {
+  button: React.ReactNode;
+}
+
+export default function HoverBorderGradientDemo({ button }: HoverBorderGradientDemoProps) {
   return (
     <div className="  text-center">
       <HoverBorderGradient
@@ -10,13 +14,13 @@ export default function HoverBorderGradientDemo({ button }) {
         as="button"
         className="dark:bg-black bg-buttonColor text-white dark:text-white  "
       >
-        {/* <AceternityLogo /> */}
         <span>{button}</span>
       </HoverBorderGradient>
     </div>
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const AceternityLogo = () => {
   return (
     <svg

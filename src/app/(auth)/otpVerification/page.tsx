@@ -17,14 +17,13 @@ export default function OtpVerification() {
   const [otp, setOtp] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
   const [alertType, setAlertType] = useState("");
-  const [userId, setUserId] = useState("");
   const router = useRouter();
 
-  const handleOtpChange = (otpValue) => {
+  const handleOtpChange = (otpValue: string) => {
     setOtp(otpValue); // Update OTP value when typed
   };
 
-  const handleOtpSubmit = async (e) => {
+  const handleOtpSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setAlertMessage("");
 

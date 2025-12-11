@@ -6,21 +6,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+interface ExerciseFormData {
+  title: string;
+  partiallyDamages: FileList;
+}
+
 export default function EditExercise() {
   const { exerciseId } = useParams(); // Get exerciseId from URL
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [exerciseData, setExerciseData] = useState(null);
 
   const {
     register,
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm();
+  } = useForm<ExerciseFormData>();
 
   useEffect(() => {
     fetchExercise();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchExercise = async () => {
@@ -36,7 +41,6 @@ export default function EditExercise() {
         }
       );
       const data = await response.json();
-      setExerciseData(data);
       setValue("title", data.title); // Pre-fill form fields with exercise data
       setLoading(false);
     } catch (error) {
@@ -44,7 +48,7 @@ export default function EditExercise() {
     }
   };
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: ExerciseFormData) => {
     const formData = new FormData();
     formData.append("title", data.title);
 

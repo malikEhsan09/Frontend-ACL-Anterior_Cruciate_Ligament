@@ -1,16 +1,22 @@
 "use client";
-import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
-import { Bell, Settings, LogOut, User } from "lucide-react"; // Import icons
+import { Settings, LogOut, User } from "lucide-react"; // Import icons
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+
+interface TopbarProps {
+  className?: string;
+  title?: string;
+  isSidebarCollapsed?: boolean;
+  userImage?: string;
+}
 
 const Topbar = ({
   className = "",
   title = "Dashboard",
   isSidebarCollapsed,
   userImage = "http://res.cloudinary.com/dr5p2iear/image/upload/v1720626597/di9grffkw7ltgikaiper.jpg", // Default image
-}) => {
+}: TopbarProps) => {
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false);
@@ -117,11 +123,6 @@ const Topbar = ({
       </div>
     </header>
   );
-};
-
-Topbar.propTypes = {
-  className: PropTypes.string,
-  isSidebarCollapsed: PropTypes.bool,
 };
 
 export default Topbar;

@@ -17,8 +17,17 @@ import {
   Tooltip,
 } from "recharts";
 
-const processPlayerData = (players) => {
-  const playerCounts = {};
+interface Player {
+  createdAt: string;
+}
+
+interface ChartPoint {
+  date: string;
+  players: number;
+}
+
+const processPlayerData = (players: Player[]): ChartPoint[] => {
+  const playerCounts: Record<string, number> = {};
   players.forEach((player) => {
     const date = new Date(player.createdAt).toISOString().split("T")[0];
     playerCounts[date] = (playerCounts[date] || 0) + 1;
@@ -29,11 +38,11 @@ const processPlayerData = (players) => {
       date,
       players: count,
     }))
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
-const DynamicPlayerGraph = ({ players }) => {
-  const [data, setData] = useState([]);
+const DynamicPlayerGraph = ({ players }: { players: Player[] }) => {
+  const [data, setData] = useState<ChartPoint[]>([]);
 
   useEffect(() => {
     setData(processPlayerData(players));
@@ -93,7 +102,13 @@ const DynamicPlayerGraph = ({ players }) => {
   );
 };
 
-const CustomTooltip = ({ active, payload, label }) => {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: { value: number }[];
+  label?: string;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white border border-gray-200 p-3 rounded shadow-md">

@@ -1,12 +1,13 @@
 import { FC } from 'react';
 import axios from 'axios';
+import { Doctor } from '../page';
 
 interface DeleteDoctorModalProps {
-  doctorToDelete: { _id: string };
+  doctorToDelete: Doctor;
   setIsDeletePopupOpen: (isOpen: boolean) => void;
-  setDoctorToDelete: (doctor: null) => void;
+  setDoctorToDelete: (doctor: Doctor | null) => void;
   handleAlert: (message: string, isSuccess: boolean) => void;
-  setDoctors: (doctors: { _id: string; name: string; specialty: string }[]) => void;
+  setDoctors: (doctors: Doctor[]) => void;
 }
 
 const DeleteDoctorModal: FC<DeleteDoctorModalProps> = ({

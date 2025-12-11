@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { MdEmail } from "react-icons/md";
@@ -24,14 +24,14 @@ export default function Signup() {
   });
 
   const [showPassword, setShowPassword] = useState(false); // State for toggling password visibility
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [open, setOpen] = useState(false);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -40,7 +40,7 @@ export default function Signup() {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
@@ -75,7 +75,11 @@ export default function Signup() {
         router.push("/login");
       }, 3000); // Hide alert after 3 seconds
     } catch (error) {
-      setError(error.response?.data?.message || "An error occurred");
+      if (axios.isAxiosError(error)) {
+        setError(error.response?.data?.message || "An error occurred");
+      } else {
+        setError("An error occurred");
+      }
       setOpen(true);
       setTimeout(() => {
         setOpen(false);

@@ -498,13 +498,13 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { FaCheckCircle } from "react-icons/fa"; // Import check icon for alert
-import Modal from "react-modal"; // Modal for editing the profile details
+import Modal, { Styles } from "react-modal"; // Modal for editing the profile details
 import { useRouter } from "next/navigation"; // Import the router to redirect if necessary
 // import "./laoder.css"; // Import the loader styles
 import { Loader } from "lucide-react";
 
 // Set default styles for Modal overlay and content
-const customStyles = {
+const customStyles: Styles = {
   content: {
     top: "50%",
     left: "50%",
@@ -526,7 +526,7 @@ const customStyles = {
 };
 
 // Function to calculate age from date of birth
-const calculateAge = (dob) => {
+const calculateAge = (dob: string): number => {
   const birthDate = new Date(dob);
   const today = new Date();
 
@@ -557,12 +557,16 @@ interface ProfileInfo {
   nationality: string;
   address: string;
   phoneNumber: string;
-  image: string | null;
+  image: string | File | null;
   isMember: string;
   club: Club | null;
 }
 
-const Settings = ({ onUpdateProfileImage }) => {
+interface SettingsProps {
+  onUpdateProfileImage?: (image: string) => void;
+}
+
+const Settings: React.FC<SettingsProps> = ({ onUpdateProfileImage }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [open, setOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
@@ -642,7 +646,7 @@ const Settings = ({ onUpdateProfileImage }) => {
     fetchProfileData();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
     // Calculate age when the date of birth is changed
@@ -661,10 +665,6 @@ const Settings = ({ onUpdateProfileImage }) => {
     }
   };
 
-  // Toggle the editing state and open the modal
-  const handleEditToggle = () => {
-    setIsEditing(!isEditing);
-  };
 
   // Handle modal close
   const closeModal = () => {
@@ -716,7 +716,7 @@ const Settings = ({ onUpdateProfileImage }) => {
         const updatedProfile = await response.json();
 
         // Call the callback to update the profile image in PlayerLayout
-        if (updatedProfile.image) {
+        if (updatedProfile.image && onUpdateProfileImage) {
           onUpdateProfileImage(updatedProfile.image); // Notify layout of the new image
         }
 
@@ -787,7 +787,7 @@ const Settings = ({ onUpdateProfileImage }) => {
               <h3 className="text-lg font-semibold text-gray-800">
                 {profileInfo.firstName} {profileInfo.lastName}
               </h3>
-              <p className="text-gray-600">{profileInfo.email}</p>
+              {/* Email is not stored in profileInfo, removed for now */}
             </div>
           </div>
         </div>
@@ -1003,4 +1003,7 @@ const Settings = ({ onUpdateProfileImage }) => {
   );
 };
 
-export default Settings;
+// Default export for Next.js page (no props)
+export default function SettingsPage() {
+  return <Settings />;
+}

@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React from "react";
 import dynamic from "next/dynamic";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 import Box from "@mui/material/Box";

@@ -18,7 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import TimeSlotSelector from "./appointment-components/time-selector";
 import {
   Tooltip,
   TooltipContent,
@@ -75,10 +74,6 @@ export default function DoctorSchedule() {
   ];
 
   const [selectedDate, setSelectedDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-
-
   const [selectedDay, setSelectedDay] = useState("");
   // const [timeSlots, setTimeSlots] = useState([]);
   const [selectedStartTime, setSelectedStartTime] = useState("");
@@ -99,6 +94,7 @@ export default function DoctorSchedule() {
 
   useEffect(() => {
     fetchSchedules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchSchedules = async () => {
@@ -176,25 +172,6 @@ export default function DoctorSchedule() {
   // const handleAddTimeSlot = () => {
   //   setTimeSlots([...timeSlots, { startTime: "", endTime: "" }]);
   // };
-  
-  const handleTimeSlotChange = (index: number, field: "startTime" | "endTime", value: string) => {
-    const newTimeSlots = [...timeSlots];
-    newTimeSlots[index][field] = value;
-    setTimeSlots(newTimeSlots);
-  };
-  
-  
-  const handleDateChange = (e) => {
-    setSelectedDate(e.target.value);
-  };
-
-  const handleStartTimeChange = (e) => {
-    setStartTime(e.target.value);
-  };
-
-  const handleEndTimeChange = (e) => {
-    setEndTime(e.target.value);
-  };
 
   const handleCreateSchedule = async () => {
     try {
@@ -278,7 +255,8 @@ export default function DoctorSchedule() {
       );
     } catch (error) {
       console.error("Error creating schedule:", error);
-      addToast("Error", error.message || "Failed to create schedule", "error");
+      const message = error instanceof Error ? error.message : "Failed to create schedule";
+      addToast("Error", message, "error");
     }
   };
   
@@ -347,23 +325,6 @@ export default function DoctorSchedule() {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (!selectedDate || !startTime || !endTime) {
-      alert('Please select a date, start time, and end time.');
-      return;
-    }
-
-    // Combine date with time
-    const formattedStartTime = new Date(`${selectedDate}T${startTime}:00`).toISOString();
-    const formattedEndTime = new Date(`${selectedDate}T${endTime}:00`).toISOString();
-
-    console.log('Selected Time Slot:', {
-      startTime: formattedStartTime,
-      endTime: formattedEndTime,
-    });
-  };
 
   return (
     <div className="p-2 mt-2">

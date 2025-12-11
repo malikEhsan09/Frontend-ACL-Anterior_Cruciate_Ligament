@@ -8,23 +8,33 @@ import {
   Edit3,
   UserPlus,
 } from "lucide-react";
+import Image from "next/image";
 import axios from "axios";
 import { FaCheckCircle } from "react-icons/fa"; // For success icon
 
 const Clubs = () => {
   const dataPerPage = 7; // Limit to 7 entries per page
   const [currentPage, setCurrentPage] = useState(1);
-  const [clubs, setClubs] = useState([]);
+  const [clubs, setClubs] = useState<Club[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState("Newest");
-  const [newClub, setNewClub] = useState({
+  const [newClub, setNewClub] = useState<{
+    clubName: string;
+    clubLocation: string;
+    maxCapacity: number;
+    description: string;
+    foundedYear: string;
+    clubLogo: File | null;
+    numOfMembers: number;
+  }>({
     clubName: "",
     clubLocation: "",
     maxCapacity: 0,
     description: "",
     foundedYear: "",
     clubLogo: null,
+    numOfMembers: 0,
   });
   interface Club {
     _id: string;
@@ -33,22 +43,22 @@ const Clubs = () => {
     maxCapacity: number;
     description: string;
     foundedYear: string;
-    clubLogo: string | null;
+    clubLogo: string | File | null;
     numOfMembers: number;
     isActive: boolean;
     players: string[];
   }
   
   const [editingClub, setEditingClub] = useState<Club | null>(null);
-  const [viewingClub, setViewingClub] = useState(null); // State for viewing club details
+  const [viewingClub, setViewingClub] = useState<Club | null>(null); // State for viewing club details
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false); // State to control view modal visibility
   const [isDeletePopupOpen, setIsDeletePopupOpen] = useState(false);
-  const [clubToDelete, setClubToDelete] = useState(null);
+  const [clubToDelete, setClubToDelete] = useState<Club | null>(null);
   const [inviteLink, setInviteLink] = useState(""); // State for invite link
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false); // Invite modal
   const [isPlayerModalOpen, setIsPlayerModalOpen] = useState(false); // Player modal
-  const [selectedClubId, setSelectedClubId] = useState(null); // For which club we are adding a player
+  const [selectedClubId, setSelectedClubId] = useState<string | null>(null); // For which club we are adding a player
   const [playerEmail, setPlayerEmail] = useState(""); // State for adding player email
   const [openAlert, setOpenAlert] = useState(false); // Custom alert state
   const [alertMessage, setAlertMessage] = useState("");
@@ -113,11 +123,13 @@ const Clubs = () => {
     formData.append("clubName", newClub.clubName);
     formData.append("clubLocation", newClub.clubLocation);
     formData.append("numOfMembers", "0"); // Set the initial number of members to 0
-    formData.append("maxCapacity", newClub.maxCapacity);
+    formData.append("maxCapacity", String(newClub.maxCapacity));
     formData.append("description", newClub.description);
-    formData.append("foundedYear", newClub.foundedYear);
-    formData.append("isActive", true); // Default value for active status
-    formData.append("createdBy", adminId); // Example creator ID
+    formData.append("foundedYear", String(newClub.foundedYear));
+    formData.append("isActive", String(true)); // Default value for active status
+    if (adminId) {
+      formData.append("createdBy", adminId); // Example creator ID
+    }
 
     if (newClub.clubLogo) {
       formData.append("clubLogo", newClub.clubLogo);
@@ -164,9 +176,8 @@ const Clubs = () => {
     }
   };
 
-
-
-  const createPromoCode = async (clubId) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const createPromoCode = async (clubId: string) => {
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
@@ -259,6 +270,7 @@ const Clubs = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleGenerateInviteLink = async (clubId: string) => {
     try {
       const token = localStorage.getItem("authToken");
@@ -288,9 +300,11 @@ const Clubs = () => {
     if (editingClub) {
       formData.append("clubLocation", editingClub.clubLocation);
     }
-    formData.append("maxCapacity", editingClub.maxCapacity);
-    formData.append("description", editingClub.description);
-    formData.append("foundedYear", editingClub.foundedYear);
+    if (editingClub) {
+      formData.append("maxCapacity", String(editingClub.maxCapacity));
+      formData.append("description", editingClub.description);
+      formData.append("foundedYear", String(editingClub.foundedYear));
+    }
     if (editingClub && editingClub.clubLogo) {
       formData.append("clubLogo", editingClub.clubLogo);
     }
@@ -316,7 +330,7 @@ const Clubs = () => {
     }
   };
 
-  const handleDeleteClub = async (clubId) => {
+  const handleDeleteClub = async (clubId: string) => {
     try {
       const token = localStorage.getItem("authToken");
       await axios.delete(`http://localhost:8800/api/club/${clubId}`, {
@@ -337,7 +351,7 @@ const Clubs = () => {
     }
   };
 
-  const openDeletePopup = (club) => {
+  const openDeletePopup = (club: Club) => {
     setClubToDelete(club);
     setIsDeletePopupOpen(true);
   };
@@ -347,7 +361,7 @@ const Clubs = () => {
     setClubToDelete(null);
   };
 
-  const openViewClubModal = (club) => {
+  const openViewClubModal = (club: Club) => {
     setViewingClub(club);
     setIsViewModalOpen(true);
   };
@@ -357,7 +371,7 @@ const Clubs = () => {
     setViewingClub(null);
   };
 
-  const openPlayerModal = (clubId) => {
+  const openPlayerModal = (clubId: string) => {
     setSelectedClubId(clubId);
     setIsPlayerModalOpen(true);
   };
@@ -447,11 +461,13 @@ const Clubs = () => {
             <tr key={index} className="border-t">
               <td className="py-3 px-6 text-blue-600 font-bold">{index + 1}</td>
               <td className="py-3 px-6">
-                {club.clubLogo ? (
-                  <img
+                {club.clubLogo && typeof club.clubLogo === "string" ? (
+                  <Image
                     src={club.clubLogo}
                     alt="Club Logo"
-                    className="w-10 h-10 rounded-full"
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 rounded-full object-cover"
                   />
                 ) : (
                   "N/A"
@@ -574,11 +590,19 @@ const Clubs = () => {
               Club Details
             </h2>
             <div className="flex flex-col items-center">
-              <img
-                src={viewingClub.clubLogo}
-                alt="Club Logo"
-                className="w-24 h-24 rounded-full mb-4"
-              />
+              {viewingClub.clubLogo && typeof viewingClub.clubLogo === "string" ? (
+                <Image
+                  src={viewingClub.clubLogo}
+                  alt="Club Logo"
+                  width={96}
+                  height={96}
+                  className="w-24 h-24 rounded-full mb-4 object-cover"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full mb-4 bg-gray-200 flex items-center justify-center">
+                  N/A
+                </div>
+              )}
               <p className="text-lg font-semibold text-lightBlue">
                 {viewingClub.clubName}
               </p>
@@ -676,7 +700,7 @@ const Clubs = () => {
               </button>
               <button
                 className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
-                onClick={() => handleDeleteClub(clubToDelete._id)}
+                onClick={() => clubToDelete && handleDeleteClub(clubToDelete._id)}
               >
                 Delete
               </button>
@@ -760,11 +784,11 @@ const Clubs = () => {
                     editingClub
                       ? setEditingClub({
                           ...editingClub,
-                          maxCapacity: e.target.value,
+                          maxCapacity: Number(e.target.value),
                         })
                       : setNewClub({
                           ...newClub,
-                          maxCapacity: e.target.value,
+                          maxCapacity: Number(e.target.value),
                         })
                   }
                   placeholder="Max Capacity"
@@ -804,17 +828,20 @@ const Clubs = () => {
                   <input
                     className="border border-gray-300 p-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-lightBlue file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-lightBlue file:text-white hover:file:bg-blue-600"
                     type="file"
-                    onChange={(e) =>
-                      editingClub
-                        ? setEditingClub({
-                            ...editingClub,
-                            clubLogo: e.target.files[0],
-                          })
-                        : setNewClub({
-                            ...newClub,
-                            clubLogo: e.target.files[0],
-                          })
-                    }
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      if (editingClub) {
+                        setEditingClub({
+                          ...editingClub,
+                          clubLogo: file,
+                        });
+                      } else {
+                        setNewClub({
+                          ...newClub,
+                          clubLogo: file,
+                        });
+                      }
+                    }}
                   />
                 </div>
               </div>

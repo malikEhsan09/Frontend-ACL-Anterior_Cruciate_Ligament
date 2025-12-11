@@ -5,19 +5,19 @@ const TimeSlotSelector = () => {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
 
-  const handleDateChange = (e) => {
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDate(e.target.value);
   };
 
-  const handleStartTimeChange = (e) => {
+  const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setStartTime(e.target.value);
   };
 
-  const handleEndTimeChange = (e) => {
+  const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEndTime(e.target.value);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!selectedDate || !startTime || !endTime) {

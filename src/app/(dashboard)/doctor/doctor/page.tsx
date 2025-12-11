@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import styles from "./doctorList.module.css";
 import axios from 'axios';
 
 interface Doctor {
@@ -27,14 +26,12 @@ interface Doctor {
 export default function DoctorList() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [error, setError] = useState<string | null>(null);
   const dataPerPage = 7;
 
   useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem('authToken');
       if (!token) {
-        setError('No token found');
         return;
       }
 
@@ -49,7 +46,7 @@ export default function DoctorList() {
         console.log("Doctors data", response.data);
         setDoctors(response.data);
       } catch (error) {
-        setError('Failed to fetch data');
+        console.error('Failed to fetch data:', error);
       }
     };
 

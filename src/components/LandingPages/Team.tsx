@@ -7,7 +7,7 @@ import moizImage from "@/public/assets/moiz.jpg"; // Replace with actual Moiz im
 const teamMembers = [
   {
     name: "Ehsan Ahmed",
-    role: "Web Developer",
+    role: "Full Stack Developer",
     image: ehsanImage,
     bio: "Crafting pixels with purpose, code that dances, and experiences that captivate. Web development is where creativity meets interactivity.",
     links: [

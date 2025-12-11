@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MdArrowBack } from "react-icons/md"; // For the back button
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa"; // For the tick and cross icons
@@ -7,7 +7,7 @@ import Image from "next/image";
 import football from "@/public/assets/football.svg"; // Replace with the correct image path
 import Link from "next/link";
 
-export default function NewPassword() {
+const NewPassword = () => {
   const [newPassword, setNewPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
@@ -167,5 +167,13 @@ export default function NewPassword() {
         </div>
       </div>
     </div>
+  );
+};
+
+export default function NewPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <NewPassword />
+    </Suspense>
   );
 }

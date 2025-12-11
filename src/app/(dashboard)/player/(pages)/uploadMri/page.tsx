@@ -288,6 +288,11 @@ const UploadMriFile = () => {
   const handleCheckout = async () => {
     let amount = 5000; // Default amount in cents (e.g., $50.00)
     const stripe = await stripePromise;
+    if (!stripe) {
+      console.error("Stripe failed to load");
+      setPaymentStatus("failed");
+      return;
+    }
     const token = localStorage.getItem("authToken");
     console.log("TOken",token)
     const promoCode = await axios.get("http://localhost:8800/api/promo",{
@@ -340,7 +345,7 @@ const UploadMriFile = () => {
     }
   };
 
-  const confirmPaymentStatus = async(sessionId) => {
+  const confirmPaymentStatus = async (sessionId: string) => {
     // Simulate successful payment for demo purposes (real app: verify payment status from backend)
     const reponse = await axios.get(`http://localhost:8800/api/payment/payment-success/?session_id=${sessionId}`);
     console.log('payment resoinse',reponse);

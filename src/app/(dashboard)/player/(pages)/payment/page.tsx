@@ -104,7 +104,7 @@ export default function PaymentHistory() {
     }
   };
 
-  const fetchPayments = async (paymentid) => {
+  const fetchPayments = async (paymentid: string) => {
     console.log("fetching payment data")
     const response = await axios.get(`http://localhost:8800/api/payment/${paymentid}`,
     //   {

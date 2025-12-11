@@ -1,6 +1,5 @@
 "use client";
 import { useContext } from "react";
-import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { ThemeContext } from "@/app/context/ThemeContext";
 import landingPage from "@/public/assets/landingPage.svg";

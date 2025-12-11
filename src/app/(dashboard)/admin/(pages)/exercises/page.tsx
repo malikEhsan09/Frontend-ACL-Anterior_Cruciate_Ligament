@@ -78,7 +78,7 @@ export default function Exercises() {
   }, []);
 
   // Handle form input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setNewExercise({ ...newExercise, [e.target.name]: e.target.value });
   };
 

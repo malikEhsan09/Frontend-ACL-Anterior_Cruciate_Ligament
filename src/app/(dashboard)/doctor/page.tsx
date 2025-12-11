@@ -171,7 +171,13 @@ const Doctor = () => {
   );
 };
 
-const CustomTooltip = ({ active, payload, label }) => {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: { value: number }[];
+  label?: string;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white border border-gray-200 p-3 rounded shadow-md">
@@ -182,7 +188,21 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const StatCard = ({ title, value, change, bgColor, textColor }) => (
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  change: string;
+  bgColor?: string;
+  textColor?: string;
+}
+
+const StatCard: React.FC<StatCardProps> = ({
+  title,
+  value,
+  change,
+  bgColor = "",
+  textColor = "",
+}) => (
   <Card
     className={`${bgColor} ${textColor} shadow-lg transition-all duration-300 hover:shadow-xl`}
   >
@@ -196,7 +216,13 @@ const StatCard = ({ title, value, change, bgColor, textColor }) => (
   </Card>
 );
 
-const AppointmentRow = ({ doctor, slot, date }) => (
+interface AppointmentRowProps {
+  doctor: string;
+  slot: string;
+  date: string;
+}
+
+const AppointmentRow: React.FC<AppointmentRowProps> = ({ doctor, slot, date }) => (
   <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200">
     <td className="p-3">{doctor}</td>
     <td className="p-3">{slot}</td>
