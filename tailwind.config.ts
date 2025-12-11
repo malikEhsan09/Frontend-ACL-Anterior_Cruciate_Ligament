@@ -70,7 +70,7 @@ const config: Config = {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate"), addVariablesForColors, function ({ addUtilities }) {
+  plugins: [require("tailwindcss-animate"), addVariablesForColors, function ({ addUtilities }: { addUtilities: (utilities: Record<string, any>, variants?: string[]) => void }) {
       addUtilities({
         '.scrollbar-thin': {
           'scrollbar-width': 'thin',
@@ -124,13 +124,5 @@ function addVariablesForColors({ addBase, theme }: any) {
     ":root": newVars,
   });
 }
-
-
-
-
-
-
-
-
 
 export default config;
